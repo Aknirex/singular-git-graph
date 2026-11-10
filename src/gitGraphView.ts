@@ -7,7 +7,7 @@ import { ExtensionState } from './extensionState';
 import { Logger } from './logger';
 import { RepoFileWatcher } from './repoFileWatcher';
 import { RepoManager } from './repoManager';
-import { ErrorInfo, GitConfigLocation, GitGraphViewInitialState, GitPushBranchMode, GitRepoSet, LoadGitGraphViewTo, RequestMessage, ResponseMessage, TabIconColourTheme } from './types';
+import { ErrorInfo, GitConfigLocation, GitGraphViewInitialState, GitPushBranchMode, GitRepoSet, LoadGitGraphViewTo, RequestMessage, ResponseMessage, SidebarToolbarAction, TabIconColourTheme } from './types';
 import { UNABLE_TO_FIND_GIT_MSG, UNCOMMITTED, archive, copyFilePathToClipboard, copyToClipboard, createPullRequest, getNonce, openExtensionSettings, openExternalUrl, openFile, showErrorMessage, viewDiff, viewDiffWithWorkingFile, viewFileAtRevision, viewScm } from './utils';
 import { Disposable, toDisposable } from './utils/disposable';
 
@@ -75,6 +75,12 @@ export class GitGraphView extends Disposable {
 	public static refreshIndentSettings() {
 		if (GitGraphView.currentPanel) GitGraphView.currentPanel.update();
 		if (GitGraphView.currentSidebarView) GitGraphView.currentSidebarView.update();
+	}
+
+	public static sidebarToolbarAction(action: SidebarToolbarAction) {
+		if (GitGraphView.currentSidebarView && GitGraphView.currentSidebarView.isPanelVisible) {
+			GitGraphView.currentSidebarView.sendMessage({ command: 'sidebarToolbarAction', action: action });
+		}
 	}
 
 	/**

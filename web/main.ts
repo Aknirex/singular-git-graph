@@ -55,6 +55,7 @@ class GitGraphView {
 	private readonly scrollShadowElem: HTMLElement;
 	private indentUpdateFrame: number | null = null;
 	private commitMessageIndents: { [hash: string]: number } = {};
+	private commitHoverTimeout: NodeJS.Timer | null = null;
 
 	constructor(viewElem: HTMLElement, prevState: WebViewState | null) {
 		this.gitRepos = initialState.repos;
@@ -81,7 +82,8 @@ class GitGraphView {
 
 		viewElem.focus();
 
-		this.graph = new Graph('commitGraph', viewElem, this.config.graph, this.config.mute);
+		const graphConfig = Object.assign({}, this.config.graph, { grid: Object.assign({}, this.config.graph.grid) });
+		this.graph = new Graph('commitGraph', viewElem, graphConfig, this.config.mute);
 
 		this.repoDropdown = new Dropdown('repoDropdown', true, false, 'Repos', (values) => {
 			this.loadRepo(values[0]);
@@ -779,6 +781,11 @@ class GitGraphView {
 			// Only render the graph if a repo is loaded (or a repo is currently being loaded)
 			return;
 		}
+		if (document.body.classList.contains('sidebarView')) {
+			const maxGraphWidth = Math.max(54, Math.min(140, this.viewElem.clientWidth * 0.38));
+			const graphWidth = Math.ceil(this.graph.fitWithinWidth(maxGraphWidth));
+			this.tableElem.style.setProperty('--sidebar-graph-width', graphWidth + 'px');
+		}
 
 		const colHeadersElem = document.getElementById('tableColHeaders');
 		const cdvHeight = this.gitRepos[this.currentRepo].cdvHeight;
@@ -1003,6 +1010,29 @@ class GitGraphView {
 		this.refreshBtnElem.title = enabled ? 'Refresh' : 'Refreshing';
 		this.refreshBtnElem.innerHTML = enabled ? SVG_ICONS.refresh : SVG_ICONS.loading;
 		alterClass(this.refreshBtnElem, CLASS_REFRESHING, !enabled);
+	}
+
+	public handleSidebarToolbarAction(action: GG.SidebarToolbarAction) {
+		switch (action) {
+			case 'repository':
+				this.repoDropdown.toggle();
+				break;
+			case 'branches':
+				this.branchDropdown.toggle();
+				break;
+			case 'fetch':
+				this.fetchFromRemotesAction();
+				break;
+			case 'refresh':
+				this.refresh(true, true);
+				break;
+			case 'find':
+				this.findWidget.show(true);
+				break;
+			case 'settings':
+				this.settingsWidget.show(this.currentRepo);
+				break;
+		}
 	}
 
 	public renderTagDetails(tagName: string, commitHash: string, details: GG.GitTagDetails) {
@@ -1974,6 +2004,7 @@ class GitGraphView {
 		let active = this.viewElem.scrollTop > 0, timeout: NodeJS.Timer | null = null;
 		this.scrollShadowElem.className = active ? CLASS_ACTIVE : '';
 		this.viewElem.addEventListener('scroll', () => {
+			if (document.body.classList.contains('sidebarView')) this.graph.hideTooltip();
 			const scrollTop = this.viewElem.scrollTop;
 			if (this.indentUpdateFrame !== null) cancelAnimationFrame(this.indentUpdateFrame);
 			this.indentUpdateFrame = requestAnimationFrame(() => {
@@ -2179,6 +2210,23 @@ class GitGraphView {
 	}
 
 	private observeTableEvents() {
+		this.tableElem.addEventListener('mouseover', (e: MouseEvent) => {
+			if (!document.body.classList.contains('sidebarView') || e.target === null) return;
+			const row = (<Element>e.target).closest('tr.commit') as HTMLElement | null;
+			if (row === null || (e.relatedTarget instanceof Node && row.contains(e.relatedTarget))) return;
+			this.closeCommitHover();
+			const id = parseInt(row.dataset.id!);
+			this.commitHoverTimeout = setTimeout(() => {
+				this.commitHoverTimeout = null;
+				this.graph.showCommitTooltip(id);
+			}, 350);
+		});
+		this.tableElem.addEventListener('mouseout', (e: MouseEvent) => {
+			if (!document.body.classList.contains('sidebarView') || e.target === null) return;
+			const row = (<Element>e.target).closest('tr.commit') as HTMLElement | null;
+			if (row === null || (e.relatedTarget instanceof Node && row.contains(e.relatedTarget))) return;
+			this.closeCommitHover();
+		});
 
 		// Register Click Event Handler
 		this.tableElem.addEventListener('click', (e: MouseEvent) => {
@@ -2324,6 +2372,14 @@ class GitGraphView {
 				contextMenu.show(actions, false, target, <MouseEvent>e, this.viewElem);
 			}
 		});
+	}
+
+	private closeCommitHover() {
+		if (this.commitHoverTimeout !== null) {
+			clearTimeout(this.commitHoverTimeout);
+			this.commitHoverTimeout = null;
+		}
+		this.graph.hideTooltip();
 	}
 
 
@@ -3172,6 +3228,9 @@ window.addEventListener('load', () => {
 	window.addEventListener('message', event => {
 		const msg: GG.ResponseMessage = event.data;
 		switch (msg.command) {
+			case 'sidebarToolbarAction':
+				gitGraph.handleSidebarToolbarAction(msg.action);
+				break;
 			case 'addRemote':
 				refreshOrDisplayError(msg.error, 'Unable to Add Remote', true);
 				break;

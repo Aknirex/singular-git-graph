@@ -1,7 +1,7 @@
 {
 	"name": "singular-git-graph",
 	"displayName": "Singular Git Graph",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"publisher": "singular-attention",
 	"author": {
 		"name": "Singular Attention"
@@ -57,6 +57,42 @@
 					"light": "resources/cmd-icon-light.svg",
 					"dark": "resources/cmd-icon-dark.svg"
 				}
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarRepository",
+				"title": "Select Graph Repository",
+				"icon": "$(repo)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarBranches",
+				"title": "Filter Graph Branches",
+				"icon": "$(git-branch)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarFetch",
+				"title": "Fetch Graph Repository",
+				"icon": "$(cloud-download)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarRefresh",
+				"title": "Refresh Graph",
+				"icon": "$(refresh)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarFind",
+				"title": "Find in Graph",
+				"icon": "$(search)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarSettings",
+				"title": "Graph Settings",
+				"icon": "$(settings-gear)"
 			},
 			{
 				"category": "Git Graph",
@@ -1511,6 +1547,14 @@
 			}
 		},
 		"menus": {
+			"view/title": [
+				{ "command": "singular-git-graph.sidebarRepository", "group": "navigation@1", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarBranches", "group": "navigation@2", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarFetch", "group": "navigation@3", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarRefresh", "group": "navigation@4", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarFind", "group": "navigation@5", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarSettings", "group": "navigation@6", "when": "view == singularGitGraph.graph" }
+			],
 			"commandPalette": [
 				{
 					"command": "singular-git-graph.openFile",

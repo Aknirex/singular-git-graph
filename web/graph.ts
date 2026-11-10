@@ -337,6 +337,8 @@ class Vertex {
 class Graph {
 	private readonly config: GG.GraphConfig;
 	private readonly muteConfig: GG.MuteCommitsConfig;
+	private readonly baseGridX: number;
+	private readonly baseOffsetX: number;
 	private vertices: Vertex[] = [];
 	private branches: Branch[] = [];
 	private availableColours: number[] = [];
@@ -365,6 +367,8 @@ class Graph {
 		this.viewElem = viewElem;
 		this.config = config;
 		this.muteConfig = muteConfig;
+		this.baseGridX = config.grid.x;
+		this.baseOffsetX = config.grid.offsetX;
 
 		const elem = document.getElementById(id)!;
 		this.contentElem = elem.parentElement!;
@@ -459,6 +463,17 @@ class Graph {
 		this.setDimensions(contentWidth, this.getHeight(expandedCommit));
 		this.applyMaxWidth(contentWidth);
 		this.closeTooltip();
+	}
+
+	public fitWithinWidth(maxWidth: number) {
+		this.config.grid.x = this.baseGridX;
+		this.config.grid.offsetX = this.baseOffsetX;
+		const contentWidth = this.getContentWidth();
+		const scale = contentWidth > maxWidth ? maxWidth / contentWidth : 1;
+		this.config.grid.x = this.baseGridX * scale;
+		this.config.grid.offsetX = this.baseOffsetX * scale;
+		this.maxWidth = -1;
+		return this.getContentWidth();
 	}
 
 
@@ -801,6 +816,26 @@ class Graph {
 
 	private vertexOut(event: MouseEvent) {
 		if (event.target === null) return;
+		this.closeTooltip();
+	}
+
+	public showCommitTooltip(id: number) {
+		if (id < 0 || id >= this.commits.length || this.commits[id].hash === UNCOMMITTED) return;
+		this.closeTooltip();
+		const commitElem = findCommitElemWithId(getCommitElems(), id);
+		if (commitElem === null) return;
+		const vertexElem = <HTMLElement | null>this.svg.querySelector('circle[data-id="' + id + '"]');
+		this.tooltipId = id;
+		commitElem.classList.add(CLASS_GRAPH_VERTEX_ACTIVE);
+		if (vertexElem !== null) {
+			this.tooltipVertex = vertexElem;
+			vertexElem.setAttribute('r', '5');
+		}
+		const rect = commitElem.getBoundingClientRect();
+		this.showTooltip(id, rect.top + rect.height / 2);
+	}
+
+	public hideTooltip() {
 		this.closeTooltip();
 	}
 

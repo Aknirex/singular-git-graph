@@ -972,6 +972,12 @@ export interface ResponseLoadRepos extends BaseMessage {
 	readonly loadViewTo: LoadGitGraphViewTo;
 }
 
+export type SidebarToolbarAction = 'repository' | 'branches' | 'fetch' | 'refresh' | 'find' | 'settings';
+export interface ResponseSidebarToolbarAction extends BaseMessage {
+	readonly command: 'sidebarToolbarAction';
+	readonly action: SidebarToolbarAction;
+}
+
 export const enum MergeActionOn {
 	Branch = 'Branch',
 	RemoteTrackingBranch = 'Remote-tracking Branch',
@@ -1375,6 +1381,7 @@ export type ResponseMessage =
 	| ResponseResetToCommit
 	| ResponseRevertCommit
 	| ResponseSetGlobalViewState
+	| ResponseSidebarToolbarAction
 	| ResponseSetWorkspaceViewState
 	| ResponseStartCodeReview
 	| ResponseTagDetails

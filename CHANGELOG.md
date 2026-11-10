@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.0.3 - 2026-11-10
+
+* Fixed sidebar graph clipping and aligned commit messages after the graph.
+* Moved navigation controls into the view title and matched native Source Control styling.
+* Added commit hover details and native-style repository and branch dropdowns.
+
 ## 1.0.2 - 2026-11-10
 
 * Matched the sidebar graph layout to Source Control with a compact toolbar, right-aligned truncated ref labels, and commit hover details.

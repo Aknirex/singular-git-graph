@@ -957,82 +957,63 @@ body.tagLabelsRightAligned .gitRef.tag{
 /* Source Control sidebar layout */
 
 body.sidebarView #controls{
-	display:flex;
-	align-items:center;
-	flex-wrap:nowrap;
-	gap:3px;
-	min-height:30px;
-	box-sizing:border-box;
-	padding:2px 4px;
-	text-align:left;
-	line-height:26px;
-	position:sticky;
+	display:block;
+	position:fixed;
 	top:0;
-	z-index:10;
-	background-color:var(--vscode-sideBar-background, var(--vscode-editor-background));
+	left:0;
+	width:0;
+	height:0;
+	padding:0;
+	border:0;
+	line-height:0;
+	overflow:visible;
+	z-index:30;
+	background:none;
 }
 body.sidebarView #repoControl, body.sidebarView #branchControl{
-	display:flex;
-	align-items:center;
-	min-width:0;
+	display:block;
+	position:absolute;
+	top:0;
+	width:0;
+	height:0;
 	margin:0;
 }
 body.sidebarView #repoControl .unselectable, body.sidebarView #branchControl .unselectable,
-body.sidebarView #showRemoteBranchesControl{
-	display:none;
-}
-body.sidebarView #repoControl{flex:0 1 32%;}
-body.sidebarView #branchControl{flex:0 1 34%;}
-body.sidebarView #repoDropdown, body.sidebarView #branchDropdown{
-	min-width:0;
-	width:100%;
-	margin:0;
-}
-body.sidebarView #repoDropdown .dropdownCurrentValue, body.sidebarView #branchDropdown .dropdownCurrentValue{
-	max-width:100%;
-	height:24px;
-	line-height:22px;
-	padding-left:7px;
-	padding-right:17px;
-}
-body.sidebarView #repoDropdown .dropdownCurrentValue:after, body.sidebarView #branchDropdown .dropdownCurrentValue:after{
-	top:10px;
-	right:5px;
-}
-body.sidebarView #repoDropdown.dropdownOpen .dropdownCurrentValue:after, body.sidebarView #branchDropdown.dropdownOpen .dropdownCurrentValue:after{
-	top:6px;
-}
+body.sidebarView #showRemoteBranchesControl,
 body.sidebarView #controls #findBtn, body.sidebarView #controls #terminalBtn,
 body.sidebarView #controls #settingsBtn, body.sidebarView #controls #fetchBtn,
 body.sidebarView #controls #refreshBtn{
+	display:none;
+}
+body.sidebarView #repoControl{right:84px;}
+body.sidebarView #branchControl{right:42px;}
+body.sidebarView #repoDropdown, body.sidebarView #branchDropdown{
+	display:block;
 	position:relative;
-	top:auto;
-	right:auto;
-	flex:0 0 22px;
-	width:22px;
-	height:24px;
+	width:0;
+	height:0;
 	margin:0;
+	pointer-events:none;
 }
-body.sidebarView #controls #findBtn{margin-left:auto;}
-body.sidebarView #controls.fetchSupported{padding-right:4px;}
-body.sidebarView #controls #findBtn svg, body.sidebarView #controls #terminalBtn svg,
-body.sidebarView #controls #settingsBtn svg, body.sidebarView #controls #fetchBtn svg,
-body.sidebarView #controls #refreshBtn svg{
-	left:3px;
-	top:4px;
-	width:16px !important;
-	height:16px !important;
+body.sidebarView #repoDropdown .dropdownCurrentValue, body.sidebarView #branchDropdown .dropdownCurrentValue{
+	display:none;
 }
-body.sidebarView #controls #refreshBtn.refreshing svg{
-	left:4px;
-	top:3px;
-	width:14px !important;
-	height:18px !important;
+body.sidebarView #repoDropdown .dropdownMenu, body.sidebarView #branchDropdown .dropdownMenu{
+	top:0;
+	left:auto;
+	right:0;
+	min-width:210px;
+	max-width:min(280px, calc(100vw - 16px));
+	margin:0;
+	border:1px solid var(--vscode-menu-border, rgba(128,128,128,0.5));
+	border-radius:4px;
+	box-shadow:0 2px 8px var(--vscode-widget-shadow, rgba(0,0,0,0.35));
+	pointer-events:auto;
 }
 body.sidebarView #commitTable #tableColHeaders{display:none;}
 body.sidebarView #commitTable table{table-layout:fixed;}
 body.sidebarView #commitTable tr.commit td{height:24px;line-height:24px;padding:0 3px;}
-body.sidebarView #commitTable tr.commit td.graphCol{width:46px;max-width:46px;padding:0;}
+body.sidebarView #commitTable tr.commit td.graphCol{width:var(--sidebar-graph-width, 54px);max-width:var(--sidebar-graph-width, 54px);padding:0;}
 body.sidebarView #commitTable tr.commit td:nth-child(2){width:auto;max-width:0;}
 body.sidebarView #commitTable tr.commit td.refsCol{
 	width:34%;
@@ -1057,7 +1038,7 @@ body.sidebarView #commitTable .refsCol .gitRef > svg{
 	height:12px;
 	padding:3px;
 	background-color:transparent;
-	fill:var(--singular-git-graph-color);
+	fill:currentColor;
 }
 body.sidebarView #commitTable .refsCol .gitRefName,
 body.sidebarView #commitTable .refsCol .gitRefHeadRemote{
@@ -1073,8 +1054,6 @@ body.sidebarView #commitTable .refsCol .gitRef.active{
 	color:var(--vscode-list-activeSelectionForeground, var(--vscode-badge-foreground));
 }
 @media (max-width: 360px){
-	body.sidebarView #repoControl{flex-basis:28%;}
-	body.sidebarView #branchControl{flex-basis:32%;}
 	body.sidebarView #commitTable tr.commit td.refsCol{width:30%;max-width:30%;}
 	body.sidebarView #commitTable .refsCol .gitRefName,
 	body.sidebarView #commitTable .refsCol .gitRefHeadRemote{max-width:48px;}

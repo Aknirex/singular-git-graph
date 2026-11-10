@@ -54,6 +54,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider('singularGitGraph.graph', sidebarViewProvider, {
 			webviewOptions: { retainContextWhenHidden: getConfig().retainContextWhenHidden }
 		}),
+		vscode.commands.registerCommand('singular-git-graph.sidebarRepository', () => GitGraphView.sidebarToolbarAction('repository')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarBranches', () => GitGraphView.sidebarToolbarAction('branches')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarFetch', () => GitGraphView.sidebarToolbarAction('fetch')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarRefresh', () => GitGraphView.sidebarToolbarAction('refresh')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarFind', () => GitGraphView.sidebarToolbarAction('find')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarSettings', () => GitGraphView.sidebarToolbarAction('settings')),
 		vscode.workspace.onDidChangeConfiguration((event) => {
 			if (event.affectsConfiguration('singular-git-graph')) {
 				if (event.affectsConfiguration('singular-git-graph.commitMessageIndent')) GitGraphView.refreshIndentSettings();

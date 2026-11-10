@@ -67,13 +67,7 @@ class Dropdown {
 		document.addEventListener('click', (e) => {
 			if (!e.target) return;
 			if (e.target === this.currentValueElem) {
-				this.dropdownVisible = !this.dropdownVisible;
-				if (this.dropdownVisible) {
-					this.filterInput.value = '';
-					this.filter();
-				}
-				this.elem.classList.toggle('dropdownOpen');
-				if (this.dropdownVisible) this.filterInput.focus();
+				this.toggle();
 			} else if (this.dropdownVisible) {
 				if ((<HTMLElement>e.target).closest('.dropdown') !== this.elem) {
 					this.close();
@@ -200,6 +194,18 @@ class Dropdown {
 	 */
 	public isOpen() {
 		return this.dropdownVisible;
+	}
+
+	public toggle() {
+		if (this.dropdownVisible) {
+			this.close();
+		} else {
+			this.dropdownVisible = true;
+			this.filterInput.value = '';
+			this.filter();
+			this.elem.classList.add('dropdownOpen');
+			this.filterInput.focus();
+		}
 	}
 
 	/**
