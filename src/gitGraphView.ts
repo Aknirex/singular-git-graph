@@ -739,7 +739,7 @@ export class GitGraphView extends Disposable {
 			<p class="unableToLoadMessage">${UNABLE_TO_FIND_GIT_MSG}</p>
 			</body>`;
 		} else if (numRepos > 0) {
-			body = `<body>
+			body = `<body${this.isSidebarView ? ' class="sidebarView"' : ''}>
 			<div id="view" tabindex="-1">
 				<div id="controls">
 					<span id="repoControl"><span class="unselectable">Repo: </span><div id="repoDropdown" class="dropdown"></div></span>

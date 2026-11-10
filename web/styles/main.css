@@ -137,13 +137,15 @@ code{
 	position:relative;
 	left:23px;
 	top:0;
-	background-color:var(--vscode-menu-background);
-	border-width:2px;
+	max-height:50vh;
+	overflow:auto;
+	background-color:var(--vscode-editorHoverWidget-background, var(--vscode-menu-background));
+	border-width:1px;
 	border-style:solid;
-	border-radius:5px;
-	color:var(--vscode-menu-foreground);
-	font-size:13px;
-	line-height:22px;
+	border-radius:4px;
+	color:var(--vscode-editorHoverWidget-foreground, var(--vscode-menu-foreground));
+	font-size:12px;
+	line-height:18px;
 	white-space:normal;
 	z-index:5;
 }
@@ -151,20 +153,52 @@ code{
 	position:absolute;
 	left:23px;
 	top:0;
-	border-radius:5px;
-	box-shadow:0 0 30px 5px var(--vscode-widget-shadow);
+	border-radius:4px;
+	box-shadow:0 2px 8px 2px var(--vscode-widget-shadow);
 	z-index:3;
 }
 
-.graphTooltipTitle, .graphTooltipSection{
-	padding:3px 10px;
+.graphTooltipHeader, .graphTooltipMessage, .graphTooltipHashes, .graphTooltipSection{
+	padding:5px 9px;
 }
-.graphTooltipTitle{
-	text-align:center;
+.graphTooltipHeader{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:10px;
+	border-bottom:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+}
+.graphTooltipAuthor{
 	font-weight:700;
+	color:var(--vscode-textLink-foreground, var(--vscode-editor-foreground));
+}
+.graphTooltipDate{
+	white-space:nowrap;
+	opacity:0.8;
+	font-weight:400;
+}
+.graphTooltipDate span{
+	opacity:0.8;
+}
+.graphTooltipMessage{
+	white-space:pre-wrap;
+	word-break:break-word;
+}
+.graphTooltipHashes{
+	display:flex;
+	flex-wrap:wrap;
+	gap:6px;
+	border-top:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+}
+.graphTooltipHash{
+	display:inline-flex;
+	align-items:center;
+	gap:4px;
+	color:var(--vscode-textLink-foreground, var(--vscode-editor-foreground));
+	font-family:var(--vscode-editor-font-family, monospace);
 }
 .graphTooltipSection{
-	border-top:1px solid rgba(128,128,128,0.5);
+	border-top:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
 }
 .graphTooltipRef, .graphTooltipCombinedRef{
 	display:inline-block;
@@ -174,9 +208,10 @@ code{
 .graphTooltipRef{
 	margin:2px;
 	padding:0 5px;
-	background-color:rgba(128,128,128,0.15);
-	border-radius:5px;
-	border:1px solid rgba(128,128,128,0.75);
+	background-color:var(--vscode-badge-background, rgba(128,128,128,0.15));
+	color:var(--vscode-badge-foreground, inherit);
+	border-radius:9px;
+	border:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.5));
 	vertical-align:top;
 	font-size:12px;
 	cursor:default;
@@ -917,6 +952,132 @@ body.tagLabelsRightAligned .gitRef.tag{
 }
 #controls.fetchSupported #fetchBtn{
 	display:block;
+}
+
+/* Source Control sidebar layout */
+
+body.sidebarView #controls{
+	display:flex;
+	align-items:center;
+	flex-wrap:nowrap;
+	gap:3px;
+	min-height:30px;
+	box-sizing:border-box;
+	padding:2px 4px;
+	text-align:left;
+	line-height:26px;
+	position:sticky;
+	top:0;
+	z-index:10;
+	background-color:var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
+body.sidebarView #repoControl, body.sidebarView #branchControl{
+	display:flex;
+	align-items:center;
+	min-width:0;
+	margin:0;
+}
+body.sidebarView #repoControl .unselectable, body.sidebarView #branchControl .unselectable,
+body.sidebarView #showRemoteBranchesControl{
+	display:none;
+}
+body.sidebarView #repoControl{flex:0 1 32%;}
+body.sidebarView #branchControl{flex:0 1 34%;}
+body.sidebarView #repoDropdown, body.sidebarView #branchDropdown{
+	min-width:0;
+	width:100%;
+	margin:0;
+}
+body.sidebarView #repoDropdown .dropdownCurrentValue, body.sidebarView #branchDropdown .dropdownCurrentValue{
+	max-width:100%;
+	height:24px;
+	line-height:22px;
+	padding-left:7px;
+	padding-right:17px;
+}
+body.sidebarView #repoDropdown .dropdownCurrentValue:after, body.sidebarView #branchDropdown .dropdownCurrentValue:after{
+	top:10px;
+	right:5px;
+}
+body.sidebarView #repoDropdown.dropdownOpen .dropdownCurrentValue:after, body.sidebarView #branchDropdown.dropdownOpen .dropdownCurrentValue:after{
+	top:6px;
+}
+body.sidebarView #controls #findBtn, body.sidebarView #controls #terminalBtn,
+body.sidebarView #controls #settingsBtn, body.sidebarView #controls #fetchBtn,
+body.sidebarView #controls #refreshBtn{
+	position:relative;
+	top:auto;
+	right:auto;
+	flex:0 0 22px;
+	width:22px;
+	height:24px;
+	margin:0;
+}
+body.sidebarView #controls #findBtn{margin-left:auto;}
+body.sidebarView #controls.fetchSupported{padding-right:4px;}
+body.sidebarView #controls #findBtn svg, body.sidebarView #controls #terminalBtn svg,
+body.sidebarView #controls #settingsBtn svg, body.sidebarView #controls #fetchBtn svg,
+body.sidebarView #controls #refreshBtn svg{
+	left:3px;
+	top:4px;
+	width:16px !important;
+	height:16px !important;
+}
+body.sidebarView #controls #refreshBtn.refreshing svg{
+	left:4px;
+	top:3px;
+	width:14px !important;
+	height:18px !important;
+}
+body.sidebarView #commitTable #tableColHeaders{display:none;}
+body.sidebarView #commitTable table{table-layout:fixed;}
+body.sidebarView #commitTable tr.commit td{height:24px;line-height:24px;padding:0 3px;}
+body.sidebarView #commitTable tr.commit td.graphCol{width:46px;max-width:46px;padding:0;}
+body.sidebarView #commitTable tr.commit td:nth-child(2){width:auto;max-width:0;}
+body.sidebarView #commitTable tr.commit td.refsCol{
+	width:34%;
+	max-width:34%;
+	text-align:right;
+	white-space:nowrap;
+	text-overflow:clip;
+}
+body.sidebarView #commitTable .description{min-width:0;overflow:hidden;align-items:center;}
+body.sidebarView #commitTable .description .text{min-width:0;}
+body.sidebarView #commitTable .refsCol .gitRef{
+	max-width:100%;
+	margin:2px 0 2px 3px;
+	border:0;
+	border-radius:9px;
+	background-color:var(--vscode-badge-background, rgba(128,128,128,0.2));
+	color:var(--vscode-badge-foreground, var(--vscode-editor-foreground));
+	vertical-align:middle;
+}
+body.sidebarView #commitTable .refsCol .gitRef > svg{
+	width:12px;
+	height:12px;
+	padding:3px;
+	background-color:transparent;
+	fill:var(--singular-git-graph-color);
+}
+body.sidebarView #commitTable .refsCol .gitRefName,
+body.sidebarView #commitTable .refsCol .gitRefHeadRemote{
+	max-width:72px;
+	padding:0 5px 0 1px;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+	vertical-align:top;
+}
+body.sidebarView #commitTable .refsCol .gitRef.active{
+	background-color:var(--vscode-list-activeSelectionBackground, var(--vscode-badge-background));
+	color:var(--vscode-list-activeSelectionForeground, var(--vscode-badge-foreground));
+}
+@media (max-width: 360px){
+	body.sidebarView #repoControl{flex-basis:28%;}
+	body.sidebarView #branchControl{flex-basis:32%;}
+	body.sidebarView #commitTable tr.commit td.refsCol{width:30%;max-width:30%;}
+	body.sidebarView #commitTable .refsCol .gitRefName,
+	body.sidebarView #commitTable .refsCol .gitRefHeadRemote{max-width:48px;}
 }
 
 #controls input:focus{

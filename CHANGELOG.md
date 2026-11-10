@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.2 - 2026-11-10
+
+* Matched the sidebar graph layout to Source Control with a compact toolbar, right-aligned truncated ref labels, and commit hover details.
+
 ## 1.0.1 - 2026-11-10
 
 * Fixed nested workspace repositories being hidden by a known parent repository, and load the exact workspace repository when it is discovered.

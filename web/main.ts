@@ -810,7 +810,8 @@ class GitGraphView {
 			markdown: this.config.markdown
 		});
 
-		let html = '<tr id="tableColHeaders"><th id="tableHeaderGraphCol" class="tableColHeader" data-col="0">Graph</th><th class="tableColHeader" data-col="1">Description</th>' +
+		const sidebarView = document.body.classList.contains('sidebarView');
+		let html = sidebarView ? '' : '<tr id="tableColHeaders"><th id="tableHeaderGraphCol" class="tableColHeader" data-col="0">Graph</th><th class="tableColHeader" data-col="1">Description</th>' +
 			(colVisibility.date ? '<th class="tableColHeader dateCol" data-col="2">Date</th>' : '') +
 			(colVisibility.author ? '<th class="tableColHeader authorCol" data-col="3">Author</th>' : '') +
 			(colVisibility.commit ? '<th class="tableColHeader" data-col="4">Commit</th>' : '') +
@@ -857,16 +858,26 @@ class GitGraphView {
 				) + '."></span>'
 				: '';
 
-			html += '<tr class="commit' + (commit.hash === currentHash ? ' current' : '') + (mutedCommits[i] ? ' mute' : '') + '"' + (commit.hash !== UNCOMMITTED ? '' : ' id="uncommittedChanges"') + ' data-id="' + i + '" data-color="' + vertexColours[i] + '">' +
-				(this.config.referenceLabels.branchLabelsAlignedToGraph ? '<td>' + (refBranches !== '' ? '<span style="margin-left:' + (widthsAtVertices[i] - 4) + 'px"' + refBranches.substring(5) : '') + '</td><td><span class="description">' + commitDot : '<td></td><td><span class="description">' + commitDot + refBranches) + (this.config.referenceLabels.tagLabelsOnRight ? message + refTags : refTags + message) + '</span></td>' +
-				(colVisibility.date ? '<td class="dateCol text" title="' + date.title + '">' + date.formatted + '</td>' : '') +
-				(colVisibility.author ? '<td class="authorCol text" title="' + escapeHtml(commit.author + ' <' + commit.email + '>') + '">' + (this.config.fetchAvatars ? '<span class="avatar" data-email="' + escapeHtml(commit.email) + '">' + (typeof this.avatars[commit.email] === 'string' ? '<img class="avatarImg" src="' + this.avatars[commit.email] + '">' : '') + '</span>' : '') + escapeHtml(commit.author) + '</td>' : '') +
-				(colVisibility.commit ? '<td class="text" title="' + escapeHtml(commit.hash) + '">' + abbrevCommit(commit.hash) + '</td>' : '') +
-				'</tr>';
+			const rowStart = '<tr class="commit' + (commit.hash === currentHash ? ' current' : '') + (mutedCommits[i] ? ' mute' : '') + '"' + (commit.hash !== UNCOMMITTED ? '' : ' id="uncommittedChanges"') + ' data-id="' + i + '" data-color="' + vertexColours[i] + '">';
+			if (sidebarView) {
+				html += rowStart + '<td class="graphCol"></td><td><span class="description">' + commitDot + message + '</span></td><td class="refsCol">' + refBranches + refTags + '</td></tr>';
+			} else {
+				html += rowStart +
+					(this.config.referenceLabels.branchLabelsAlignedToGraph ? '<td>' + (refBranches !== '' ? '<span style="margin-left:' + (widthsAtVertices[i] - 4) + 'px"' + refBranches.substring(5) : '') + '</td><td><span class="description">' + commitDot : '<td></td><td><span class="description">' + commitDot + refBranches) + (this.config.referenceLabels.tagLabelsOnRight ? message + refTags : refTags + message) + '</span></td>' +
+					(colVisibility.date ? '<td class="dateCol text" title="' + date.title + '">' + date.formatted + '</td>' : '') +
+					(colVisibility.author ? '<td class="authorCol text" title="' + escapeHtml(commit.author + ' <' + commit.email + '>') + '">' + (this.config.fetchAvatars ? '<span class="avatar" data-email="' + escapeHtml(commit.email) + '">' + (typeof this.avatars[commit.email] === 'string' ? '<img class="avatarImg" src="' + this.avatars[commit.email] + '">' : '') + '</span>' : '') + escapeHtml(commit.author) + '</td>' : '') +
+					(colVisibility.commit ? '<td class="text" title="' + escapeHtml(commit.hash) + '">' + abbrevCommit(commit.hash) + '</td>' : '') +
+					'</tr>';
+			}
 		}
 		this.tableElem.innerHTML = '<table>' + html + '</table>';
 		this.footerElem.innerHTML = this.moreCommitsAvailable ? '<div id="loadMoreCommitsBtn" class="roundedBtn">Load More Commits</div>' : '';
-		this.makeTableResizable();
+		if (sidebarView) {
+			this.tableElem.className = 'sidebarLayout';
+			this.graph.limitMaxWidth(46);
+		} else {
+			this.makeTableResizable();
+		}
 		this.findWidget.refresh();
 		this.renderedGitBranchHead = this.gitBranchHead;
 
@@ -975,7 +986,9 @@ class GitGraphView {
 
 	private renderUncommittedChanges() {
 		const colVisibility = this.getColumnVisibility(), date = formatShortDate(this.commits[0].date);
-		document.getElementById('uncommittedChanges')!.innerHTML = '<td></td><td><b>' + escapeHtml(this.commits[0].message) + '</b></td>' +
+		document.getElementById('uncommittedChanges')!.innerHTML = document.body.classList.contains('sidebarView')
+			? '<td class="graphCol"></td><td><span class="description"><b>' + escapeHtml(this.commits[0].message) + '</b></span></td><td class="refsCol"></td>'
+			: '<td></td><td><b>' + escapeHtml(this.commits[0].message) + '</b></td>' +
 			(colVisibility.date ? '<td class="dateCol text" title="' + date.title + '">' + date.formatted + '</td>' : '') +
 			(colVisibility.author ? '<td class="authorCol text" title="* <>">*</td>' : '') +
 			(colVisibility.commit ? '<td class="text" title="*">*</td>' : '');

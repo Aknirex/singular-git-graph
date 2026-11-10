@@ -825,7 +825,12 @@ class Graph {
 			return htmlRefs.join('');
 		};
 
-		let html = '<div class="graphTooltipTitle">Commit ' + abbrevCommit(this.commits[id].hash) + '</div>';
+		const commit = this.commits[id], date = formatShortDate(commit.date);
+		const message = escapeHtml(commit.message).replace(/\r?\n/g, '<br>');
+		const parents = commit.parents.map((parent) => '<span class="graphTooltipHash" title="' + escapeHtml(parent) + '">' + SVG_ICONS.commit + abbrevCommit(parent) + '</span>').join('');
+		let html = '<div class="graphTooltipHeader"><span class="graphTooltipAuthor">' + escapeHtml(commit.author) + '</span><span class="graphTooltipDate">' + escapeHtml(date.formatted) + ' <span>(' + escapeHtml(date.title) + ')</span></span></div>' +
+			'<div class="graphTooltipMessage">' + message + '</div>' +
+			'<div class="graphTooltipHashes"><span class="graphTooltipHash" title="' + escapeHtml(commit.hash) + '">' + SVG_ICONS.commit + abbrevCommit(commit.hash) + '</span>' + parents + '</div>';
 		if (this.commitHead !== null && typeof this.commitLookup[this.commitHead] === 'number') {
 			html += '<div class="graphTooltipSection">This commit is ' + (childrenIncludesHead ? '' : '<b><i>not</i></b> ') + 'included in <span class="graphTooltipRef">HEAD</span></div>';
 		}
