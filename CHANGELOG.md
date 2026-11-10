@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.1 - 2026-11-10
+
+* Fixed nested workspace repositories being hidden by a known parent repository, and load the exact workspace repository when it is discovered.
+
 ## 1.0.0 - 2026-11-10
 
 * Forked as Singular Git Graph with isolated extension identity and settings.

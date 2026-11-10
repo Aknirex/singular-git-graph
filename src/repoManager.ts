@@ -342,16 +342,12 @@ export class RepoManager extends Disposable {
 	}
 
 	/**
-	 * Checks if the specified path is within a known repository.
+	 * Checks if the specified path is already a known repository root.
 	 * @param path The path to check.
-	 * @returns TRUE => Path is within a known repository, FALSE => Path isn't within a known repository.
+	 * @returns TRUE => Path is a known repository root, FALSE => Path isn't a known repository root.
 	 */
-	private isDirectoryWithinRepos(path: string) {
-		let repoPaths = Object.keys(this.repos);
-		for (let i = 0; i < repoPaths.length; i++) {
-			if (path === repoPaths[i] || path.startsWith(pathWithTrailingSlash(repoPaths[i]))) return true;
-		}
-		return false;
+	private isKnownRepoRoot(path: string) {
+		return this.isKnownRepo(path);
 	}
 
 	/**
@@ -461,7 +457,10 @@ export class RepoManager extends Disposable {
 			}
 		}
 		this.logger.log('Completed searching workspace for new repos');
-		if (changes) this.sendRepos();
+		if (changes) {
+			const workspaceRepo = rootFolders !== undefined && rootFolders.length === 1 ? getPathFromUri(rootFolders[0].uri) : null;
+			this.sendRepos(workspaceRepo !== null && this.isKnownRepo(workspaceRepo) ? workspaceRepo : null);
+		}
 		return changes;
 	}
 
@@ -473,7 +472,7 @@ export class RepoManager extends Disposable {
 	 */
 	private searchDirectoryForRepos(directory: string, maxDepth: number) {
 		return new Promise<boolean>(resolve => {
-			if (this.isDirectoryWithinRepos(directory)) {
+			if (this.isKnownRepoRoot(directory)) {
 				resolve(false);
 				return;
 			}
