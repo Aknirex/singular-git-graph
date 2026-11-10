@@ -1,4 +1,4 @@
-# Git Graph extension for Visual Studio Code
+# Singular Git Graph extension for Visual Studio Code
 
 View a Git Graph of your repository, and easily perform Git actions from the graph. Configurable to look the way you want!
 
@@ -6,14 +6,14 @@ View a Git Graph of your repository, and easily perform Git actions from the gra
 
 ## Features
 
-* Git Graph View:
+* Git Graph View in the editor or the movable Singular Git Graph sidebar view:
     * Display:
         * Local & Remote Branches
         * Local Refs: Heads, Tags & Remotes
         * Uncommitted Changes
     * Perform Git Actions (available by right clicking on a commit / branch / tag):
-        * Create, Checkout, Delete, Fetch, Merge, Pull, Push, Rebase, Rename & Reset Branches
-        * Add, Delete & Push Tags
+        * Create, Checkout, Delete, Fetch, Merge, Pull, Rebase, Rename & Reset Branches
+        * Add and Delete Tags
         * Checkout, Cherry Pick, Drop, Merge & Revert Commits
         * Clean, Reset & Stash Uncommitted Changes
         * Apply, Create Branch From, Drop & Pop Stashes
@@ -39,7 +39,7 @@ View a Git Graph of your repository, and easily perform Git actions from the gra
     * Filter the branches shown in Git Graph using the 'Branches' dropdown menu. The options for filtering the branches are:
         * Show All branches
         * Select one or more branches to be viewed
-        * Select from a user predefined array of custom glob patterns (by setting `git-graph.customBranchGlobPatterns`)
+        * Select from a user predefined array of custom glob patterns (by setting `singular-git-graph.customBranchGlobPatterns`)
     * Fetch from Remote(s) _(available on the top control bar)_
     * Find Widget allows you to quickly find one or more commits containing a specific phrase (in the commit message / date / author / hash, branch or tag names).
     * Repository Settings Widget:
@@ -47,7 +47,7 @@ View a Git Graph of your repository, and easily perform Git actions from the gra
         * Configure "Issue Linking" - Converts issue numbers in commit messages into hyperlinks, that open the issue in your issue tracking system.
         * Configure "Pull Request Creation" - Automates the opening and pre-filling of a Pull Request form, directly from a branches context menu.
             * Support for the publicly hosted Bitbucket, GitHub and GitLab Pull Request providers is built-in.
-            * Custom Pull Request providers can be configured using the Extension Setting `git-graph.customPullRequestProviders` (e.g. for use with privately hosted Pull Request providers). Information on how to configure custom providers is available [here](https://github.com/mhutchie/vscode-git-graph/wiki/Configuring-a-custom-Pull-Request-Provider).
+            * Custom Pull Request providers can be configured using the Extension Setting `singular-git-graph.customPullRequestProviders` (e.g. for use with privately hosted Pull Request providers). Information on how to configure custom providers is available [here](https://github.com/mhutchie/vscode-git-graph/wiki/Configuring-a-custom-Pull-Request-Provider).
         * Export your Git Graph Repository Configuration to a file that can be committed in the repository. It allows others working in the same repository to automatically use the same Git Graph configuration.
     * Keyboard Shortcuts (available in the Git Graph View):
         * `CTRL/CMD + F`: Open the Find Widget.
@@ -62,7 +62,7 @@ View a Git Graph of your repository, and easily perform Git actions from the gra
         * `Enter`: If a dialog is open, pressing enter submits the dialog, taking the primary (left) action.
         * `Escape`: Closes the active dialog, context menu or the Commit Details View.
     * Resize the width of each column, and show/hide the Date, Author & Commit columns.
-    * Common Emoji Shortcodes are automatically replaced with the corresponding emoji in commit messages (including all [gitmoji](https://gitmoji.carloscuesta.me/)). Custom Emoji Shortcode mappings can be defined in `git-graph.customEmojiShortcodeMappings`.
+    * Common Emoji Shortcodes are automatically replaced with the corresponding emoji in commit messages (including all [gitmoji](https://gitmoji.carloscuesta.me/)). Custom Emoji Shortcode mappings can be defined in `singular-git-graph.customEmojiShortcodeMappings`.
 * A broad range of configurable settings (e.g. graph style, branch colours, and more...). See the 'Extension Settings' section below for more information.
 * "Git Graph" launch button in the Status Bar
 * "Git Graph: View Git Graph" launch command in the Command Palette
@@ -70,6 +70,9 @@ View a Git Graph of your repository, and easily perform Git actions from the gra
 ## Extension Settings
 
 Detailed information of all Git Graph settings is available [here](https://github.com/mhutchie/vscode-git-graph/wiki/Extension-Settings), including: descriptions, screenshots, default values and types.
+
+* **Commit Message Indent Mode**: Choose per-commit indentation, loaded-range alignment, visible-range alignment, or smooth dynamic alignment.
+* **Commit Message Indent Animation**: Choose no transition, a fast transition, or a slow transition.
 
 A summary of the Git Graph extension settings are:
 * **Commit Details View**:
@@ -147,15 +150,15 @@ This extension consumes the following settings:
 
 This extension contributes the following commands:
 
-* `git-graph.view`: Git Graph: View Git Graph
-* `git-graph.addGitRepository`: Git Graph: Add Git Repository... _(used to add sub-repos to Git Graph)_
-* `git-graph.clearAvatarCache`: Git Graph: Clear Avatar Cache
-* `git-graph.endAllWorkspaceCodeReviews`: Git Graph: End All Code Reviews in Workspace
-* `git-graph.endSpecificWorkspaceCodeReview`: Git Graph: End a specific Code Review in Workspace... _(used to end a specific Code Review without having to first open it in the Git Graph View)_
-* `git-graph.fetch`: Git Graph: Fetch from Remote(s) _(used to open the Git Graph View and immediately run "Fetch from Remote(s)")_
-* `git-graph.removeGitRepository`: Git Graph: Remove Git Repository... _(used to remove repositories from Git Graph)_
-* `git-graph.resumeWorkspaceCodeReview`: Git Graph: Resume a specific Code Review in Workspace... _(used to open the Git Graph View to a Code Review that is already in progress)_
-* `git-graph.version`: Git Graph: Get Version Information
+* `singular-git-graph.view`: Git Graph: View Git Graph
+* `singular-git-graph.addGitRepository`: Git Graph: Add Git Repository... _(used to add sub-repos to Git Graph)_
+* `singular-git-graph.clearAvatarCache`: Git Graph: Clear Avatar Cache
+* `singular-git-graph.endAllWorkspaceCodeReviews`: Git Graph: End All Code Reviews in Workspace
+* `singular-git-graph.endSpecificWorkspaceCodeReview`: Git Graph: End a specific Code Review in Workspace... _(used to end a specific Code Review without having to first open it in the Git Graph View)_
+* `singular-git-graph.fetch`: Git Graph: Fetch from Remote(s) _(used to open the Git Graph View and immediately run "Fetch from Remote(s)")_
+* `singular-git-graph.removeGitRepository`: Git Graph: Remove Git Repository... _(used to remove repositories from Git Graph)_
+* `singular-git-graph.resumeWorkspaceCodeReview`: Git Graph: Resume a specific Code Review in Workspace... _(used to open the Git Graph View to a Code Review that is already in progress)_
+* `singular-git-graph.version`: Git Graph: Get Version Information
 
 ## Release Notes
 
@@ -163,7 +166,7 @@ Detailed Release Notes are available [here](CHANGELOG.md).
 
 ## Visual Studio Marketplace
 
-This extension is available on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph) for Visual Studio Code.
+This extension is prepared for publishing under the `singular-attention` publisher.
 
 ## Acknowledgements
 

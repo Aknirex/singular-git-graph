@@ -2,9 +2,10 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Run Extension",
+			"name": "Manual Extension Host",
 			"type": "extensionHost",
 			"request": "launch",
+			"preLaunchTask": "Compile",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"

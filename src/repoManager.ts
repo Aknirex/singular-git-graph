@@ -98,7 +98,7 @@ export class RepoManager extends Disposable {
 
 			// Monitor changes to the maxDepthOfRepoSearch Extension Setting, and trigger a new search if needed
 			onDidChangeConfiguration((event) => {
-				if (event.affectsConfiguration('git-graph.maxDepthOfRepoSearch')) {
+				if (event.affectsConfiguration('singular-git-graph.maxDepthOfRepoSearch')) {
 					this.maxDepthOfRepoSearchChanged();
 				}
 			}),
@@ -136,7 +136,7 @@ export class RepoManager extends Disposable {
 	}
 
 	/**
-	 * Apply the new value of `git-graph.maxDepthOfRepoSearch` to the RepoManager.
+	 * Apply the new value of `singular-git-graph.maxDepthOfRepoSearch` to the RepoManager.
 	 */
 	private maxDepthOfRepoSearchChanged() {
 		const newDepth = getConfig().maxDepthOfRepoSearch;

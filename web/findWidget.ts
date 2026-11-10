@@ -157,8 +157,8 @@ class FindWidget {
 	 * @param colour The base colour for the find matches.
 	 */
 	public setColour(colour: string) {
-		document.body.style.setProperty('--git-graph-findMatch', colour);
-		document.body.style.setProperty('--git-graph-findMatchCommit', modifyColourOpacity(colour, 0.5));
+		document.body.style.setProperty('--singular-git-graph-findMatch', colour);
+		document.body.style.setProperty('--singular-git-graph-findMatchCommit', modifyColourOpacity(colour, 0.5));
 	}
 
 

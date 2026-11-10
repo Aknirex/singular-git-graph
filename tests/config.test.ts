@@ -2,7 +2,7 @@ import * as vscode from './mocks/vscode';
 jest.mock('vscode', () => vscode, { virtual: true });
 
 import { getConfig } from '../src/config';
-import { CommitDetailsViewLocation, CommitOrdering, DateFormatType, DateType, FileViewType, GitResetMode, GraphStyle, GraphUncommittedChangesStyle, RepoDropdownOrder, SquashMessageFormat, TabIconColourTheme, TagType } from '../src/types';
+import { CommitDetailsViewLocation, CommitMessageIndentAnimation, CommitMessageIndentMode, CommitOrdering, DateFormatType, DateType, FileViewType, GitResetMode, GraphStyle, GraphUncommittedChangesStyle, RepoDropdownOrder, SquashMessageFormat, TabIconColourTheme, TagType } from '../src/types';
 
 import { expectRenamedExtensionSettingToHaveBeenCalled } from './helpers/expectations';
 
@@ -21,7 +21,7 @@ describe('Config', () => {
 		getConfig();
 
 		// Assert
-		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('git-graph', undefined);
+		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('singular-git-graph', undefined);
 	});
 
 	it('Should construct a Config instance (for a specific repository)', () => {
@@ -29,12 +29,33 @@ describe('Config', () => {
 		getConfig('/path/to/repo');
 
 		// Assert
-		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('git-graph', {
+		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('singular-git-graph', {
 			scheme: 'file',
 			authority: '',
 			path: '/path/to/repo',
 			query: '',
 			fragment: ''
+		});
+	});
+
+	describe('commitMessageIndent', () => {
+		it('Should use dynamic indentation and fast animation by default', () => {
+			expect(config.commitMessageIndentMode).toBe(CommitMessageIndentMode.Dynamic);
+			expect(config.commitMessageIndentAnimation).toBe(CommitMessageIndentAnimation.Fast);
+		});
+
+		it('Should accept each supported indentation mode and animation', () => {
+			vscode.mockExtensionSettingReturnValue('commitMessageIndent.mode', 'visibleMax');
+			vscode.mockExtensionSettingReturnValue('commitMessageIndent.animation', 'slow');
+			expect(config.commitMessageIndentMode).toBe(CommitMessageIndentMode.VisibleMax);
+			expect(config.commitMessageIndentAnimation).toBe(CommitMessageIndentAnimation.Slow);
+		});
+
+		it('Should fall back to defaults for invalid values', () => {
+			vscode.mockExtensionSettingReturnValue('commitMessageIndent.mode', 'invalid');
+			vscode.mockExtensionSettingReturnValue('commitMessageIndent.animation', 'invalid');
+			expect(config.commitMessageIndentMode).toBe(CommitMessageIndentMode.Dynamic);
+			expect(config.commitMessageIndentAnimation).toBe(CommitMessageIndentAnimation.Fast);
 		});
 	});
 
@@ -269,7 +290,6 @@ describe('Config', () => {
 					delete: true,
 					merge: true,
 					rebase: true,
-					push: true,
 					viewIssue: true,
 					createPullRequest: true,
 					createArchive: true,
@@ -325,7 +345,6 @@ describe('Config', () => {
 				tag: {
 					viewDetails: true,
 					delete: true,
-					push: true,
 					createArchive: true,
 					copyName: true
 				},
@@ -351,7 +370,6 @@ describe('Config', () => {
 					delete: true,
 					merge: true,
 					rebase: true,
-					push: true,
 					viewIssue: true,
 					createPullRequest: true,
 					createArchive: true,
@@ -407,7 +425,6 @@ describe('Config', () => {
 				tag: {
 					viewDetails: true,
 					delete: true,
-					push: true,
 					createArchive: true,
 					copyName: true
 				},
@@ -451,7 +468,6 @@ describe('Config', () => {
 					delete: true,
 					merge: true,
 					rebase: true,
-					push: true,
 					viewIssue: true,
 					createPullRequest: true,
 					createArchive: true,
@@ -507,7 +523,6 @@ describe('Config', () => {
 				tag: {
 					viewDetails: true,
 					delete: true,
-					push: true,
 					createArchive: true,
 					copyName: true
 				},
@@ -846,7 +861,6 @@ describe('Config', () => {
 		it('Should return TRUE values for boolean-based configuration values when they are TRUE', () => {
 			// Setup
 			[
-				'dialog.addTag.pushToRemote',
 				'dialog.applyStash.reinstateIndex',
 				'dialog.cherryPick.noCommit',
 				'dialog.cherryPick.recordOrigin',
@@ -870,7 +884,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -894,7 +907,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: true,
 					type: TagType.Annotated
 				},
 				applyStash: {
@@ -951,7 +963,6 @@ describe('Config', () => {
 		it('Should return FALSE values for boolean-based configuration values when they are FALSE', () => {
 			// Setup
 			[
-				'dialog.addTag.pushToRemote',
 				'dialog.applyStash.reinstateIndex',
 				'dialog.cherryPick.noCommit',
 				'dialog.cherryPick.recordOrigin',
@@ -975,7 +986,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -999,7 +1009,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: false,
 					type: TagType.Annotated
 				},
 				applyStash: {
@@ -1056,7 +1065,6 @@ describe('Config', () => {
 		it('Should return TRUE values for boolean-based configuration values when they are truthy', () => {
 			// Setup
 			[
-				'dialog.addTag.pushToRemote',
 				'dialog.applyStash.reinstateIndex',
 				'dialog.cherryPick.noCommit',
 				'dialog.cherryPick.recordOrigin',
@@ -1080,7 +1088,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -1104,7 +1111,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: true,
 					type: TagType.Annotated
 				},
 				applyStash: {
@@ -1161,7 +1167,6 @@ describe('Config', () => {
 		it('Should return FALSE values for boolean-based configuration values when they are falsy', () => {
 			// Setup
 			[
-				'dialog.addTag.pushToRemote',
 				'dialog.applyStash.reinstateIndex',
 				'dialog.cherryPick.noCommit',
 				'dialog.cherryPick.recordOrigin',
@@ -1185,7 +1190,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -1209,7 +1213,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: false,
 					type: TagType.Annotated
 				},
 				applyStash: {
@@ -1275,7 +1278,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -1299,7 +1301,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: false,
 					type: TagType.Annotated
 				},
 				applyStash: {
@@ -1358,7 +1359,6 @@ describe('Config', () => {
 			const value = config.dialogDefaults;
 
 			// Assert
-			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.pushToRemote', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.addTag.type', 'Annotated');
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.applyStash.reinstateIndex', false);
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.cherryPick.noCommit', false);
@@ -1382,7 +1382,6 @@ describe('Config', () => {
 			expect(workspaceConfiguration.get).toBeCalledWith('dialog.stashUncommittedChanges.includeUntracked', true);
 			expect(value).toStrictEqual({
 				addTag: {
-					pushToRemote: false,
 					type: TagType.Annotated
 				},
 				applyStash: {

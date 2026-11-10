@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.0.0 - 2026-11-10
+
+* Forked as Singular Git Graph with isolated extension identity and settings.
+* Added a draggable Git Graph view for the Source Control sidebar.
+* Added configurable commit message indentation and transition animation.
+* Removed push actions from the graph interface.
+
 ## 1.30.0 - 2021-04-05
 * #395 Added a "Force Fetch" option onto the "Fetch into Local Branch" Dialog, allowing any local branch (that's not checked out) to be reset to the remote branch. This dialog is accessed via the Remote Branch Context Menu.
 * #457 New "View Diff with Working File" action on the File Context Menu in the Commit Details View.

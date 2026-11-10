@@ -232,6 +232,8 @@ export interface GitGraphViewInitialState {
 }
 
 export interface GitGraphViewConfig {
+	readonly commitMessageIndentMode: CommitMessageIndentMode;
+	readonly commitMessageIndentAnimation: CommitMessageIndentAnimation;
 	readonly commitDetailsView: CommitDetailsViewConfig;
 	readonly commitOrdering: CommitOrdering;
 	readonly contextMenuActionsVisibility: ContextMenuActionsVisibility;
@@ -260,6 +262,19 @@ export interface GitGraphViewConfig {
 	readonly showRemoteBranches: boolean;
 	readonly showStashes: boolean;
 	readonly showTags: boolean;
+}
+
+export const enum CommitMessageIndentMode {
+	PerCommit = 'perCommit',
+	LoadedMax = 'loadedMax',
+	VisibleMax = 'visibleMax',
+	Dynamic = 'dynamic'
+}
+
+export const enum CommitMessageIndentAnimation {
+	None = 'none',
+	Fast = 'fast',
+	Slow = 'slow'
 }
 
 export interface GitGraphViewGlobalState {
@@ -348,7 +363,6 @@ export interface ContextMenuActionsVisibility {
 		readonly delete: boolean;
 		readonly merge: boolean;
 		readonly rebase: boolean;
-		readonly push: boolean;
 		readonly viewIssue: boolean;
 		readonly createPullRequest: boolean;
 		readonly createArchive: boolean;
@@ -404,7 +418,6 @@ export interface ContextMenuActionsVisibility {
 	readonly tag: {
 		readonly viewDetails: boolean;
 		readonly delete: boolean;
-		readonly push: boolean;
 		readonly createArchive: boolean;
 		readonly copyName: boolean;
 	};
@@ -455,7 +468,6 @@ export interface DefaultColumnVisibility {
 
 export interface DialogDefaults {
 	readonly addTag: {
-		readonly pushToRemote: boolean,
 		readonly type: TagType
 	};
 	readonly applyStash: {

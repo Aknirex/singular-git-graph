@@ -91,10 +91,10 @@ export class AskpassManager extends Disposable {
 
 function getIPCHandlePath(nonce: string): string {
 	if (process.platform === 'win32') {
-		return '\\\\.\\pipe\\git-graph-askpass-' + nonce + '-sock';
+		return '\\\\.\\pipe\\singular-git-graph-askpass-' + nonce + '-sock';
 	} else if (process.env['XDG_RUNTIME_DIR']) {
-		return path.join(process.env['XDG_RUNTIME_DIR'] as string, 'git-graph-askpass-' + nonce + '.sock');
+		return path.join(process.env['XDG_RUNTIME_DIR'] as string, 'singular-git-graph-askpass-' + nonce + '.sock');
 	} else {
-		return path.join(os.tmpdir(), 'git-graph-askpass-' + nonce + '.sock');
+		return path.join(os.tmpdir(), 'singular-git-graph-askpass-' + nonce + '.sock');
 	}
 }

@@ -24,15 +24,21 @@ let mockedWebviews: { panel: vscode.WebviewPanel, mocks: WebviewPanelMocks }[] =
 export const mocks = {
 	extensionContext: {
 		asAbsolutePath: jest.fn(),
+		extensionUri: {} as vscode.Uri,
 		extensionPath: '/path/to/extension',
+		environmentVariableCollection: {} as vscode.EnvironmentVariableCollection,
 		globalState: {
 			get: jest.fn(),
 			update: jest.fn()
 		},
 		globalStoragePath: '/path/to/globalStorage',
+		globalStorageUri: {} as vscode.Uri,
 		logPath: '/path/to/logs',
+		logUri: {} as vscode.Uri,
 		storagePath: '/path/to/storage',
+		storageUri: undefined,
 		subscriptions: [],
+		extensionMode: 3 as vscode.ExtensionMode,
 		workspaceState: {
 			get: jest.fn(),
 			update: jest.fn()

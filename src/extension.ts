@@ -5,6 +5,8 @@ import { getConfig } from './config';
 import { DataSource } from './dataSource';
 import { DiffDocProvider } from './diffDocProvider';
 import { ExtensionState } from './extensionState';
+import { GitGraphSidebarViewProvider } from './gitGraphSidebarView';
+import { GitGraphView } from './gitGraphView';
 import { onStartUp } from './life-cycle/startup';
 import { Logger } from './logger';
 import { RepoManager } from './repoManager';
@@ -45,11 +47,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	const statusBarItem = new StatusBarItem(repoManager.getNumRepos(), repoManager.onDidChangeRepos, onDidChangeConfiguration, logger);
 	const commandManager = new CommandManager(context, avatarManager, dataSource, extensionState, repoManager, gitExecutable, onDidChangeGitExecutable, logger);
 	const diffDocProvider = new DiffDocProvider(dataSource);
+	const sidebarViewProvider = new GitGraphSidebarViewProvider(context.extensionPath, dataSource, extensionState, avatarManager, repoManager, logger);
 
 	context.subscriptions.push(
 		vscode.workspace.registerTextDocumentContentProvider(DiffDocProvider.scheme, diffDocProvider),
+		vscode.window.registerWebviewViewProvider('singularGitGraph.graph', sidebarViewProvider, {
+			webviewOptions: { retainContextWhenHidden: getConfig().retainContextWhenHidden }
+		}),
 		vscode.workspace.onDidChangeConfiguration((event) => {
-			if (event.affectsConfiguration('git-graph')) {
+			if (event.affectsConfiguration('singular-git-graph')) {
+				if (event.affectsConfiguration('singular-git-graph.commitMessageIndent')) GitGraphView.refreshIndentSettings();
 				configurationEmitter.emit(event);
 			} else if (event.affectsConfiguration('git.path')) {
 				const paths = getConfig().gitPaths;

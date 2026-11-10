@@ -53,6 +53,8 @@ class GitGraphView {
 	private readonly showRemoteBranchesElem: HTMLInputElement;
 	private readonly refreshBtnElem: HTMLElement;
 	private readonly scrollShadowElem: HTMLElement;
+	private indentUpdateFrame: number | null = null;
+	private commitMessageIndents: { [hash: string]: number } = {};
 
 	constructor(viewElem: HTMLElement, prevState: WebViewState | null) {
 		this.gitRepos = initialState.repos;
@@ -74,6 +76,8 @@ class GitGraphView {
 		this.tableElem = document.getElementById('commitTable')!;
 		this.footerElem = document.getElementById('footer')!;
 		this.scrollShadowElem = <HTMLInputElement>document.getElementById('scrollShadow')!;
+		const indentDuration = this.config.commitMessageIndentAnimation === 'none' ? '0ms' : this.config.commitMessageIndentAnimation === 'slow' ? '400ms' : '120ms';
+		document.body.style.setProperty('--commit-message-indent-duration', indentDuration);
 
 		viewElem.focus();
 
@@ -551,18 +555,6 @@ class GitGraphView {
 		return this.commits;
 	}
 
-	private getPushRemote(branch: string | null = null) {
-		const possibleRemotes = [];
-		if (this.gitConfig !== null) {
-			if (branch !== null && typeof this.gitConfig.branches[branch] !== 'undefined') {
-				possibleRemotes.push(this.gitConfig.branches[branch].pushRemote, this.gitConfig.branches[branch].remote);
-			}
-			possibleRemotes.push(this.gitConfig.pushDefault);
-		}
-		possibleRemotes.push('origin');
-		return possibleRemotes.find((remote) => remote !== null && this.gitRemotes.includes(remote)) || this.gitRemotes[0];
-	}
-
 	public getRepoConfig(): Readonly<GG.GitRepoConfig> | null {
 		return this.gitConfig;
 	}
@@ -920,6 +912,65 @@ class GitGraphView {
 				}
 			}
 		}
+		this.updateCommitMessageIndentation(true);
+	}
+
+	private updateCommitMessageIndentation(animateFromPrevious: boolean = false) {
+		if (this.config.commitMessageIndentMode === 'perCommit') return;
+
+		const rows = Array.prototype.slice.call(this.tableElem.querySelectorAll('tr.commit')) as HTMLTableRowElement[];
+		const viewRect = this.viewElem.getBoundingClientRect();
+		const tableRect = this.tableElem.getBoundingClientRect();
+		const visibleRows = rows.filter((row) => {
+			const rect = row.getBoundingClientRect();
+			return rect.bottom > Math.max(viewRect.top, tableRect.top) && rect.top < Math.min(viewRect.bottom, tableRect.bottom);
+		});
+		const offsets = rows.map((row) => this.getCommitMessageNaturalOffset(row));
+		const loadedMax = offsets.length > 0 ? Math.max.apply(null, offsets) : 0;
+		const visibleOffsets = visibleRows.map((row) => this.getCommitMessageNaturalOffset(row));
+		const visibleMax = visibleOffsets.length > 0 ? Math.max.apply(null, visibleOffsets) : 0;
+		let targetIndent = this.config.commitMessageIndentMode === 'loadedMax' ? loadedMax : visibleMax;
+		if (this.config.commitMessageIndentMode === 'dynamic') {
+			const ratio = loadedMax > 0 ? visibleMax / loadedMax : 0;
+			const easedRatio = ratio * ratio * (3 - 2 * ratio);
+			targetIndent = visibleMax + (loadedMax - visibleMax) * easedRatio;
+		}
+
+		const animatedTargets: { elem: HTMLElement; marginLeft: string }[] = [];
+		const nextIndents: { [hash: string]: number } = {};
+		rows.forEach((row) => {
+			const text = <HTMLElement | null>row.querySelector('.description .text');
+			if (text) {
+				const index = parseInt(row.dataset.id!), hash = this.commits[index].hash;
+				const naturalOffset = this.getCommitMessageNaturalOffset(row);
+				const marginLeft = Math.max(0, targetIndent - naturalOffset) + 'px';
+				if (animateFromPrevious && this.config.commitMessageIndentAnimation !== 'none' && typeof this.commitMessageIndents[hash] === 'number') {
+					text.style.marginLeft = Math.max(0, this.commitMessageIndents[hash] - naturalOffset) + 'px';
+					animatedTargets.push({ elem: text, marginLeft: marginLeft });
+				} else {
+					text.style.marginLeft = marginLeft;
+				}
+				nextIndents[hash] = targetIndent;
+			}
+		});
+		this.commitMessageIndents = nextIndents;
+		if (animatedTargets.length > 0) {
+			requestAnimationFrame(() => animatedTargets.forEach((target) => target.elem.style.marginLeft = target.marginLeft));
+		}
+	}
+
+	private getCommitMessageNaturalOffset(row: HTMLTableRowElement) {
+		const description = <HTMLElement | null>row.querySelector('.description');
+		const text = <HTMLElement | null>row.querySelector('.description .text');
+		if (!description || !text) return 0;
+		let offset = 0;
+		for (let i = 0; i < description.children.length; i++) {
+			const child = <HTMLElement>description.children[i];
+			if (child === text) break;
+			const style = window.getComputedStyle(child);
+			offset += child.getBoundingClientRect().width + (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0);
+		}
+		return offset;
 	}
 
 	private renderUncommittedChanges() {
@@ -1010,49 +1061,6 @@ class GitGraphView {
 				title: 'Rebase current branch on Branch' + ELLIPSIS,
 				visible: visibility.rebase && this.gitBranchHead !== refName,
 				onClick: () => this.rebaseAction(refName, refName, GG.RebaseActionOn.Branch, target)
-			}, {
-				title: 'Push Branch' + ELLIPSIS,
-				visible: visibility.push && this.gitRemotes.length > 0,
-				onClick: () => {
-					const multipleRemotes = this.gitRemotes.length > 1;
-					const inputs: DialogInput[] = [
-						{ type: DialogInputType.Checkbox, name: 'Set Upstream', value: true },
-						{
-							type: DialogInputType.Radio,
-							name: 'Push Mode',
-							options: [
-								{ name: 'Normal', value: GG.GitPushBranchMode.Normal },
-								{ name: 'Force With Lease', value: GG.GitPushBranchMode.ForceWithLease },
-								{ name: 'Force', value: GG.GitPushBranchMode.Force }
-							],
-							default: GG.GitPushBranchMode.Normal
-						}
-					];
-
-					if (multipleRemotes) {
-						inputs.unshift({
-							type: DialogInputType.Select,
-							name: 'Push to Remote(s)',
-							defaults: [this.getPushRemote(refName)],
-							options: this.gitRemotes.map((remote) => ({ name: remote, value: remote })),
-							multiple: true
-						});
-					}
-
-					dialog.showForm('Are you sure you want to push the branch <b><i>' + escapeHtml(refName) + '</i></b>' + (multipleRemotes ? '' : ' to the remote <b><i>' + escapeHtml(this.gitRemotes[0]) + '</i></b>') + '?', inputs, 'Yes, push', (values) => {
-						const remotes = multipleRemotes ? <string[]>values.shift() : [this.gitRemotes[0]];
-						const setUpstream = <boolean>values[0];
-						runAction({
-							command: 'pushBranch',
-							repo: this.currentRepo,
-							branchName: refName,
-							remotes: remotes,
-							setUpstream: setUpstream,
-							mode: <GG.GitPushBranchMode>values[1],
-							willUpdateBranchConfig: setUpstream && remotes.length > 0 && (this.gitConfig === null || typeof this.gitConfig.branches[refName] === 'undefined' || this.gitConfig.branches[refName].remote !== remotes[remotes.length - 1])
-						}, 'Pushing Branch');
-					}, target);
-				}
 			}
 		], [
 			this.getViewIssueAction(refName, visibility.viewIssue, target),
@@ -1062,8 +1070,8 @@ class GitGraphView {
 				onClick: () => {
 					const config = this.gitRepos[this.currentRepo].pullRequestConfig;
 					if (config === null) return;
-					dialog.showCheckbox('Are you sure you want to create a Pull Request for branch <b><i>' + escapeHtml(refName) + '</i></b>?', 'Push branch before creating the Pull Request', true, 'Yes, create Pull Request', (push) => {
-						runAction({ command: 'createPullRequest', repo: this.currentRepo, config: config, sourceRemote: config.sourceRemote, sourceOwner: config.sourceOwner, sourceRepo: config.sourceRepo, sourceBranch: refName, push: push }, 'Creating Pull Request');
+					dialog.showConfirmation('Are you sure you want to create a Pull Request for branch <b><i>' + escapeHtml(refName) + '</i></b>?', 'Yes, create Pull Request', () => {
+						runAction({ command: 'createPullRequest', repo: this.currentRepo, config: config, sourceRemote: config.sourceRemote, sourceOwner: config.sourceOwner, sourceRepo: config.sourceRepo, sourceBranch: refName, push: false }, 'Creating Pull Request');
 					}, target);
 				}
 			}
@@ -1103,7 +1111,7 @@ class GitGraphView {
 			{
 				title: 'Add Tag' + ELLIPSIS,
 				visible: visibility.addTag,
-				onClick: () => this.addTagAction(hash, '', this.config.dialogDefaults.addTag.type, '', null, target)
+				onClick: () => this.addTagAction(hash, '', this.config.dialogDefaults.addTag.type, '', target)
 			}, {
 				title: 'Create Branch' + ELLIPSIS,
 				visible: visibility.createBranch,
@@ -1427,33 +1435,6 @@ class GitGraphView {
 						}, target);
 					}
 				}
-			}, {
-				title: 'Push Tag' + ELLIPSIS,
-				visible: visibility.push && this.gitRemotes.length > 0,
-				onClick: () => {
-					const runPushTagAction = (remotes: string[]) => {
-						runAction({
-							command: 'pushTag',
-							repo: this.currentRepo,
-							tagName: tagName,
-							remotes: remotes,
-							commitHash: hash,
-							skipRemoteCheck: globalState.pushTagSkipRemoteCheck
-						}, 'Pushing Tag');
-					};
-
-					if (this.gitRemotes.length === 1) {
-						dialog.showConfirmation('Are you sure you want to push the tag <b><i>' + escapeHtml(tagName) + '</i></b> to the remote <b><i>' + escapeHtml(this.gitRemotes[0]) + '</i></b>?', 'Yes, push', () => {
-							runPushTagAction([this.gitRemotes[0]]);
-						}, target);
-					} else if (this.gitRemotes.length > 1) {
-						const defaults = [this.getPushRemote()];
-						const options = this.gitRemotes.map((remote) => ({ name: remote, value: remote }));
-						dialog.showMultiSelect('Are you sure you want to push the tag <b><i>' + escapeHtml(tagName) + '</i></b>? Select the remote(s) to push the tag to:', defaults, options, 'Yes, push', (remotes) => {
-							runPushTagAction(remotes);
-						}, target);
-					}
-				}
 			}
 		], [
 			{
@@ -1553,7 +1534,7 @@ class GitGraphView {
 
 	/* Actions */
 
-	private addTagAction(hash: string, initialName: string, initialType: GG.TagType, initialMessage: string, initialPushToRemote: string | null, target: DialogTarget & CommitTarget, isInitialLoad: boolean = true) {
+	private addTagAction(hash: string, initialName: string, initialType: GG.TagType, initialMessage: string, target: DialogTarget & CommitTarget) {
 		let mostRecentTagsIndex = -1;
 		for (let i = 0; i < this.commits.length; i++) {
 			if (this.commits[i].tags.length > 0 && (mostRecentTagsIndex === -1 || this.commits[i].date > this.commits[mostRecentTagsIndex].date)) {
@@ -1567,30 +1548,10 @@ class GitGraphView {
 			{ type: DialogInputType.Select, name: 'Type', default: initialType === GG.TagType.Annotated ? 'annotated' : 'lightweight', options: [{ name: 'Annotated', value: 'annotated' }, { name: 'Lightweight', value: 'lightweight' }] },
 			{ type: DialogInputType.Text, name: 'Message', default: initialMessage, placeholder: 'Optional', info: 'A message can only be added to an annotated tag.' }
 		];
-		if (this.gitRemotes.length > 1) {
-			const options = [{ name: 'Don\'t push', value: '-1' }];
-			this.gitRemotes.forEach((remote, i) => options.push({ name: remote, value: i.toString() }));
-			const defaultOption = initialPushToRemote !== null
-				? this.gitRemotes.indexOf(initialPushToRemote)
-				: isInitialLoad && this.config.dialogDefaults.addTag.pushToRemote
-					? this.gitRemotes.indexOf(this.getPushRemote())
-					: -1;
-			inputs.push({ type: DialogInputType.Select, name: 'Push to remote', options: options, default: defaultOption.toString(), info: 'Once this tag has been added, push it to this remote.' });
-		} else if (this.gitRemotes.length === 1) {
-			const defaultValue = initialPushToRemote !== null || (isInitialLoad && this.config.dialogDefaults.addTag.pushToRemote);
-			inputs.push({ type: DialogInputType.Checkbox, name: 'Push to remote', value: defaultValue, info: 'Once this tag has been added, push it to the repositories remote.' });
-		}
-
 		dialog.showForm('Add tag to commit <b><i>' + abbrevCommit(hash) + '</i></b>:', inputs, 'Add Tag', (values) => {
 			const tagName = <string>values[0];
 			const type = <string>values[1] === 'annotated' ? GG.TagType.Annotated : GG.TagType.Lightweight;
 			const message = <string>values[2];
-			const pushToRemote = this.gitRemotes.length > 1 && <string>values[3] !== '-1'
-				? this.gitRemotes[parseInt(<string>values[3])]
-				: this.gitRemotes.length === 1 && <boolean>values[3]
-					? this.gitRemotes[0]
-					: null;
-
 			const runAddTagAction = (force: boolean) => {
 				runAction({
 					command: 'addTag',
@@ -1599,7 +1560,7 @@ class GitGraphView {
 					commitHash: hash,
 					type: type,
 					message: message,
-					pushToRemote: pushToRemote,
+					pushToRemote: null,
 					pushSkipRemoteCheck: globalState.pushTagSkipRemoteCheck,
 					force: force
 				}, 'Adding Tag');
@@ -1609,7 +1570,7 @@ class GitGraphView {
 				dialog.showTwoButtons('A tag named <b><i>' + escapeHtml(tagName) + '</i></b> already exists, do you want to replace it with this new tag?', 'Yes, replace the existing tag', () => {
 					runAddTagAction(true);
 				}, 'No, choose another tag name', () => {
-					this.addTagAction(hash, tagName, type, message, pushToRemote, target, false);
+					this.addTagAction(hash, tagName, type, message, target);
 				}, target);
 			} else {
 				runAddTagAction(false);
@@ -1946,6 +1907,7 @@ class GitGraphView {
 		window.addEventListener('resize', () => {
 			if (windowWidth === window.outerWidth && windowHeight === window.outerHeight) {
 				this.renderGraph();
+				this.updateCommitMessageIndentation();
 			} else {
 				windowWidth = window.outerWidth;
 				windowHeight = window.outerHeight;
@@ -1960,8 +1922,8 @@ class GitGraphView {
 			selectionBackgroundColor = !!getVSCodeStyle(CSS_PROP_SELECTION_BACKGROUND);
 
 		const setFlashColour = (colour: string) => {
-			document.body.style.setProperty('--git-graph-flashPrimary', modifyColourOpacity(colour, 0.7));
-			document.body.style.setProperty('--git-graph-flashSecondary', modifyColourOpacity(colour, 0.5));
+			document.body.style.setProperty('--singular-git-graph-flashPrimary', modifyColourOpacity(colour, 0.7));
+			document.body.style.setProperty('--singular-git-graph-flashSecondary', modifyColourOpacity(colour, 0.5));
 		};
 		const setSelectionBackgroundColorExists = () => {
 			alterClass(document.body, 'selection-background-color-exists', selectionBackgroundColor);
@@ -2000,6 +1962,11 @@ class GitGraphView {
 		this.scrollShadowElem.className = active ? CLASS_ACTIVE : '';
 		this.viewElem.addEventListener('scroll', () => {
 			const scrollTop = this.viewElem.scrollTop;
+			if (this.indentUpdateFrame !== null) cancelAnimationFrame(this.indentUpdateFrame);
+			this.indentUpdateFrame = requestAnimationFrame(() => {
+				this.indentUpdateFrame = null;
+				this.updateCommitMessageIndentation();
+			});
 			if (active !== scrollTop > 0) {
 				active = scrollTop > 0;
 				this.scrollShadowElem.className = active ? CLASS_ACTIVE : '';
