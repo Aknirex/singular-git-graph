@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.6 - 2026-11-11
+
+* Replaced branch and tag artwork with VS Code Codicons.
+
 ## 1.0.5 - 2026-11-11
 
 * Fixed repository and branch dropdown placement in the sidebar toolbar.
