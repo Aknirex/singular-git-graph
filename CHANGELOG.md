@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.4 - 2026-11-11
+
+* Added a distinct Singular Git Graph icon for Marketplace publication.
+
 ## 1.0.3 - 2026-11-10
 
 * Fixed sidebar graph clipping and aligned commit messages after the graph.
