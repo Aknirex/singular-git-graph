@@ -56,6 +56,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 		vscode.commands.registerCommand('singular-git-graph.sidebarRepository', () => GitGraphView.sidebarToolbarAction('repository')),
 		vscode.commands.registerCommand('singular-git-graph.sidebarBranches', () => GitGraphView.sidebarToolbarAction('branches')),
+		vscode.commands.registerCommand('singular-git-graph.sidebarCurrentHistory', () => GitGraphView.sidebarToolbarAction('currentHistory')),
 		vscode.commands.registerCommand('singular-git-graph.sidebarFetch', () => GitGraphView.sidebarToolbarAction('fetch')),
 		vscode.commands.registerCommand('singular-git-graph.sidebarRefresh', () => GitGraphView.sidebarToolbarAction('refresh')),
 		vscode.commands.registerCommand('singular-git-graph.sidebarFind', () => GitGraphView.sidebarToolbarAction('find')),

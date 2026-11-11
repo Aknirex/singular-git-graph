@@ -89,6 +89,7 @@ code{
 	top:0;
 	z-index:2;
 	pointer-events:none;
+	shape-rendering:crispEdges;
 }
 #commitGraph circle{
 	pointer-events:all;
@@ -116,112 +117,6 @@ code{
 	fill:none;
 	stroke-width:2;
 }
-
-#graphTooltip{
-	display:block;
-	position:absolute;
-	pointer-events:auto;
-}
-#graphTooltipPointer{
-	position:absolute;
-	display:block;
-	width:30px;
-	height:2px;
-	left:4px;
-	top:0;
-	margin-top:-1px;
-	z-index:4;
-}
-#graphTooltipContent{
-	position:relative;
-	left:23px;
-	top:0;
-	max-height:none;
-	overflow:hidden;
-	background-color:var(--vscode-editorHoverWidget-background, var(--vscode-menu-background));
-	border-width:1px;
-	border-style:solid;
-	border-radius:4px;
-	color:var(--vscode-editorHoverWidget-foreground, var(--vscode-menu-foreground));
-	font-size:12px;
-	line-height:18px;
-	white-space:normal;
-	z-index:5;
-}
-#graphTooltipShadow{
-	position:absolute;
-	left:23px;
-	top:0;
-	border-radius:4px;
-	box-shadow:0 2px 8px 2px var(--vscode-widget-shadow);
-	z-index:3;
-}
-
-.graphTooltipHeader, .graphTooltipMessage, .graphTooltipHashes, .graphTooltipSection{
-	padding:5px 9px;
-}
-.graphTooltipHeader{
-	display:flex;
-	align-items:center;
-	justify-content:space-between;
-	gap:10px;
-	border-bottom:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
-}
-.graphTooltipAuthor{
-	font-weight:700;
-	color:var(--vscode-textLink-foreground, var(--vscode-editor-foreground));
-}
-.graphTooltipDate{
-	white-space:nowrap;
-	opacity:0.8;
-	font-weight:400;
-}
-.graphTooltipDate span{
-	opacity:0.8;
-}
-.graphTooltipMessage{
-	white-space:pre-wrap;
-	word-break:break-word;
-}
-.graphTooltipHashes{
-	display:flex;
-	flex-wrap:wrap;
-	gap:6px;
-	border-top:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
-}
-.graphTooltipHash{
-	display:inline-flex;
-	align-items:center;
-	gap:4px;
-	color:var(--vscode-textLink-foreground, var(--vscode-editor-foreground));
-	font-family:var(--vscode-editor-font-family, monospace);
-}
-.graphTooltipSection{
-	border-top:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
-}
-.graphTooltipRef, .graphTooltipCombinedRef{
-	display:inline-block;
-	height:18px;
-	line-height:18px;
-}
-.graphTooltipRef{
-	margin:2px;
-	padding:0 5px;
-	background-color:var(--vscode-badge-background, rgba(128,128,128,0.15));
-	color:var(--vscode-badge-foreground, inherit);
-	border-radius:9px;
-	border:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.5));
-	vertical-align:top;
-	font-size:12px;
-	cursor:default;
-}
-.graphTooltipCombinedRef{
-	margin-left:5px;
-	padding-left:5px;
-	border-left:1px solid rgba(128,128,128,0.45);
-	font-style:italic;
-}
-
 
 /* Commit Table */
 
@@ -358,11 +253,22 @@ code{
 	vertical-align:top;
 }
 #cdv.inline td{
-	background-color:rgba(128,128,128,0.1);
+	background-color:var(--vscode-editorHoverWidget-background, var(--vscode-sideBar-background));
 	position:relative;
 	font-size:13px;
 	line-height:18px;
 	white-space:normal;
+	border-top:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+	border-bottom:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+	color:var(--vscode-editorHoverWidget-foreground, var(--vscode-editor-foreground));
+}
+#cdv.inline td:first-child{
+	border-left:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+	border-radius:4px 0 0 4px;
+}
+#cdv.inline td:last-child{
+	border-right:1px solid var(--vscode-editorHoverWidget-border, rgba(128,128,128,0.4));
+	border-radius:0 4px 4px 0;
 }
 #cdv.docked{
 	display:block;
@@ -1012,41 +918,22 @@ body.sidebarView #repoDropdown .dropdownMenu, body.sidebarView #branchDropdown .
 body.sidebarView #repoDropdown .dropdownOptions, body.sidebarView #branchDropdown .dropdownOptions{
 	max-height:min(45vh, 320px);
 }
-body.sidebarView #graphTooltip{
-	position:fixed;
-	left:4px !important;
-	right:4px;
-	width:auto;
-	z-index:100;
-}
-body.sidebarView #graphTooltipPointer{display:none;}
-body.sidebarView #graphTooltipContent{
-	left:0;
-	width:auto;
-	max-width:none !important;
-	max-height:none;
-	box-sizing:border-box;
-	white-space:normal;
-}
-body.sidebarView #graphTooltipShadow{left:0;}
-body.sidebarView .graphTooltipMessage{
-	max-height:90px;
-	overflow:hidden;
-}
 body.sidebarView #commitTable #tableColHeaders{display:none;}
 body.sidebarView #commitTable table{table-layout:fixed;}
 body.sidebarView #commitTable tr.commit td{height:24px;line-height:24px;padding:0 3px;}
 body.sidebarView #commitTable tr.commit td.graphCol{width:var(--sidebar-graph-width, 54px);max-width:var(--sidebar-graph-width, 54px);padding:0;}
 body.sidebarView #commitTable tr.commit td:nth-child(2){width:auto;max-width:0;}
-body.sidebarView #commitTable tr.commit td.refsCol{
-	width:34%;
-	max-width:34%;
-	text-align:right;
-	white-space:nowrap;
-	text-overflow:clip;
-}
-body.sidebarView #commitTable .description{min-width:0;overflow:hidden;align-items:center;}
+body.sidebarView #commitTable .description{min-width:0;overflow:hidden;align-items:center;width:100%;}
 body.sidebarView #commitTable .description .text{min-width:0;}
+body.sidebarView #commitTable .refsCol{
+	display:inline-flex;
+	flex:0 1 auto;
+	justify-content:flex-end;
+	max-width:48%;
+	margin-left:auto;
+	white-space:nowrap;
+	overflow:hidden;
+}
 body.sidebarView #commitTable .refsCol .gitRef{
 	max-width:100%;
 	margin:2px 0 2px 3px;
@@ -1077,7 +964,6 @@ body.sidebarView #commitTable .refsCol .gitRef.active{
 	color:var(--vscode-list-activeSelectionForeground, var(--vscode-badge-foreground));
 }
 @media (max-width: 360px){
-	body.sidebarView #commitTable tr.commit td.refsCol{width:30%;max-width:30%;}
 	body.sidebarView #commitTable .refsCol .gitRefName,
 	body.sidebarView #commitTable .refsCol .gitRefHeadRemote{max-width:48px;}
 }

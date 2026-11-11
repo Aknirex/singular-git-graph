@@ -50,12 +50,10 @@ class GitGraphView {
 	private readonly controlsElem: HTMLElement;
 	private readonly tableElem: HTMLElement;
 	private readonly footerElem: HTMLElement;
-	private readonly showRemoteBranchesElem: HTMLInputElement;
 	private readonly refreshBtnElem: HTMLElement;
 	private readonly scrollShadowElem: HTMLElement;
 	private indentUpdateFrame: number | null = null;
 	private commitMessageIndents: { [hash: string]: number } = {};
-	private commitHoverTimeout: NodeJS.Timer | null = null;
 
 	constructor(viewElem: HTMLElement, prevState: WebViewState | null) {
 		this.gitRepos = initialState.repos;
@@ -83,7 +81,7 @@ class GitGraphView {
 		viewElem.focus();
 
 		const graphConfig = Object.assign({}, this.config.graph, { grid: Object.assign({}, this.config.graph.grid) });
-		this.graph = new Graph('commitGraph', viewElem, graphConfig, this.config.mute);
+		this.graph = new Graph('commitGraph', graphConfig, this.config.mute);
 
 		this.repoDropdown = new Dropdown('repoDropdown', true, false, 'Repos', (values) => {
 			this.loadRepo(values[0]);
@@ -95,12 +93,6 @@ class GitGraphView {
 			this.saveState();
 			this.clearCommits();
 			this.requestLoadRepoInfoAndCommits(true, true);
-		});
-
-		this.showRemoteBranchesElem = <HTMLInputElement>document.getElementById('showRemoteBranchesCheckbox')!;
-		this.showRemoteBranchesElem.addEventListener('change', () => {
-			this.saveRepoStateValue(this.currentRepo, 'showRemoteBranchesV2', this.showRemoteBranchesElem.checked ? GG.BooleanOverride.Enabled : GG.BooleanOverride.Disabled);
-			this.refresh(true);
 		});
 
 		this.refreshBtnElem = document.getElementById('refreshBtn')!;
@@ -135,7 +127,6 @@ class GitGraphView {
 			this.loadCommits(prevState.commits, prevState.commitHead, prevState.gitTags, prevState.moreCommitsAvailable, prevState.onlyFollowFirstParent);
 			this.findWidget.restoreState(prevState.findWidget);
 			this.settingsWidget.restoreState(prevState.settingsWidget);
-			this.showRemoteBranchesElem.checked = getShowRemoteBranches(this.gitRepos[prevState.currentRepo].showRemoteBranchesV2);
 		}
 
 		let loadViewTo = initialState.loadViewTo;
@@ -213,7 +204,6 @@ class GitGraphView {
 	private loadRepo(repo: string) {
 		this.currentRepo = repo;
 		this.currentRepoLoading = true;
-		this.showRemoteBranchesElem.checked = getShowRemoteBranches(this.gitRepos[this.currentRepo].showRemoteBranchesV2);
 		this.maxCommits = this.config.initialLoadCommits;
 		this.gitConfig = null;
 		this.gitRemotes = [];
@@ -867,7 +857,8 @@ class GitGraphView {
 
 			const rowStart = '<tr class="commit' + (commit.hash === currentHash ? ' current' : '') + (mutedCommits[i] ? ' mute' : '') + '"' + (commit.hash !== UNCOMMITTED ? '' : ' id="uncommittedChanges"') + ' data-id="' + i + '" data-color="' + vertexColours[i] + '">';
 			if (sidebarView) {
-				html += rowStart + '<td class="graphCol"></td><td><span class="description">' + commitDot + message + '</span></td><td class="refsCol">' + refBranches + refTags + '</td></tr>';
+				const refs = refBranches + refTags;
+				html += rowStart + '<td class="graphCol"></td><td><span class="description">' + commitDot + message + (refs !== '' ? '<span class="refsCol">' + refs + '</span>' : '') + '</span></td></tr>';
 			} else {
 				html += rowStart +
 					(this.config.referenceLabels.branchLabelsAlignedToGraph ? '<td>' + (refBranches !== '' ? '<span style="margin-left:' + (widthsAtVertices[i] - 4) + 'px"' + refBranches.substring(5) : '') + '</td><td><span class="description">' + commitDot : '<td></td><td><span class="description">' + commitDot + refBranches) + (this.config.referenceLabels.tagLabelsOnRight ? message + refTags : refTags + message) + '</span></td>' +
@@ -994,7 +985,7 @@ class GitGraphView {
 	private renderUncommittedChanges() {
 		const colVisibility = this.getColumnVisibility(), date = formatShortDate(this.commits[0].date);
 		document.getElementById('uncommittedChanges')!.innerHTML = document.body.classList.contains('sidebarView')
-			? '<td class="graphCol"></td><td><span class="description"><b>' + escapeHtml(this.commits[0].message) + '</b></span></td><td class="refsCol"></td>'
+			? '<td class="graphCol"></td><td><span class="description"><b>' + escapeHtml(this.commits[0].message) + '</b></span></td>'
 			: '<td></td><td><b>' + escapeHtml(this.commits[0].message) + '</b></td>' +
 			(colVisibility.date ? '<td class="dateCol text" title="' + date.title + '">' + date.formatted + '</td>' : '') +
 			(colVisibility.author ? '<td class="authorCol text" title="* <>">*</td>' : '') +
@@ -1031,6 +1022,9 @@ class GitGraphView {
 				break;
 			case 'settings':
 				this.settingsWidget.show(this.currentRepo);
+				break;
+			case 'currentHistory':
+				if (this.commitHead !== null) this.scrollToCommit(this.commitHead, true, true);
 				break;
 		}
 	}
@@ -1703,7 +1697,7 @@ class GitGraphView {
 	/* Table Utils */
 
 	private makeTableResizable() {
-		let colHeadersElem = document.getElementById('tableColHeaders')!, cols = <HTMLCollectionOf<HTMLElement>>document.getElementsByClassName('tableColHeader');
+		let cols = <HTMLCollectionOf<HTMLElement>>document.getElementsByClassName('tableColHeader');
 		let columnWidths: GG.ColumnWidth[], mouseX = -1, col = -1, colIndex = -1;
 
 		const makeTableFixedLayout = () => {
@@ -1809,64 +1803,6 @@ class GitGraphView {
 			eventOverlay.create('colResize', processResizingColumn, stopResizingColumn);
 		});
 
-		colHeadersElem.addEventListener('contextmenu', (e: MouseEvent) => {
-			handledEvent(e);
-
-			const toggleColumnState = (col: number, defaultWidth: number) => {
-				columnWidths[col] = columnWidths[col] !== COLUMN_HIDDEN ? COLUMN_HIDDEN : columnWidths[0] === COLUMN_AUTO ? COLUMN_AUTO : defaultWidth - COLUMN_LEFT_RIGHT_PADDING;
-				this.saveColumnWidths(columnWidths);
-				this.render();
-			};
-
-			const commitOrdering = getCommitOrdering(this.gitRepos[this.currentRepo].commitOrdering);
-			const changeCommitOrdering = (repoCommitOrdering: GG.RepoCommitOrdering) => {
-				this.saveRepoStateValue(this.currentRepo, 'commitOrdering', repoCommitOrdering);
-				this.refresh(true);
-			};
-
-			contextMenu.show([
-				[
-					{
-						title: 'Date',
-						visible: true,
-						checked: columnWidths[2] !== COLUMN_HIDDEN,
-						onClick: () => toggleColumnState(2, 128)
-					},
-					{
-						title: 'Author',
-						visible: true,
-						checked: columnWidths[3] !== COLUMN_HIDDEN,
-						onClick: () => toggleColumnState(3, 128)
-					},
-					{
-						title: 'Commit',
-						visible: true,
-						checked: columnWidths[4] !== COLUMN_HIDDEN,
-						onClick: () => toggleColumnState(4, 80)
-					}
-				],
-				[
-					{
-						title: 'Commit Timestamp Order',
-						visible: true,
-						checked: commitOrdering === GG.CommitOrdering.Date,
-						onClick: () => changeCommitOrdering(GG.RepoCommitOrdering.Date)
-					},
-					{
-						title: 'Author Timestamp Order',
-						visible: true,
-						checked: commitOrdering === GG.CommitOrdering.AuthorDate,
-						onClick: () => changeCommitOrdering(GG.RepoCommitOrdering.AuthorDate)
-					},
-					{
-						title: 'Topological Order',
-						visible: true,
-						checked: commitOrdering === GG.CommitOrdering.Topological,
-						onClick: () => changeCommitOrdering(GG.RepoCommitOrdering.Topological)
-					}
-				]
-			], true, null, e, this.viewElem);
-		});
 	}
 
 	public getColumnVisibility() {
@@ -1879,7 +1815,32 @@ class GitGraphView {
 		}
 	}
 
+	public setColumnVisibility(column: 'date' | 'author' | 'commit', visible: boolean) {
+		let stored = this.gitRepos[this.currentRepo].columnWidths;
+		const defaults = this.config.defaultColumnVisibility;
+		let widths: GG.ColumnWidth[] = stored === null
+			? [COLUMN_AUTO, COLUMN_AUTO, defaults.date ? COLUMN_AUTO : COLUMN_HIDDEN, defaults.author ? COLUMN_AUTO : COLUMN_HIDDEN, defaults.commit ? COLUMN_AUTO : COLUMN_HIDDEN]
+			: [stored[0], COLUMN_AUTO, stored[1], stored[2], stored[3]];
+		const index = column === 'date' ? 2 : column === 'author' ? 3 : 4;
+		if ((widths[index] !== COLUMN_HIDDEN) === visible) return;
+		const defaultWidth = column === 'commit' ? 80 : 128;
+		widths[index] = visible ? (widths[0] === COLUMN_AUTO ? COLUMN_AUTO : defaultWidth - COLUMN_LEFT_RIGHT_PADDING) : COLUMN_HIDDEN;
+		this.saveColumnWidths(widths);
+		this.render();
+	}
+
+	public setShowRemoteBranches(visible: boolean) {
+		this.saveRepoStateValue(this.currentRepo, 'showRemoteBranchesV2', visible ? GG.BooleanOverride.Enabled : GG.BooleanOverride.Disabled);
+		this.refresh(true);
+	}
+
+	public setCommitOrdering(ordering: GG.RepoCommitOrdering) {
+		this.saveRepoStateValue(this.currentRepo, 'commitOrdering', ordering);
+		this.refresh(true);
+	}
+
 	private getNumColumns() {
+		if (document.body.classList.contains('sidebarView')) return 2;
 		let colVisibility = this.getColumnVisibility();
 		return 2 + (colVisibility.date ? 1 : 0) + (colVisibility.author ? 1 : 0) + (colVisibility.commit ? 1 : 0);
 	}
@@ -2004,7 +1965,6 @@ class GitGraphView {
 		let active = this.viewElem.scrollTop > 0, timeout: NodeJS.Timer | null = null;
 		this.scrollShadowElem.className = active ? CLASS_ACTIVE : '';
 		this.viewElem.addEventListener('scroll', () => {
-			if (document.body.classList.contains('sidebarView')) this.graph.hideTooltip();
 			const scrollTop = this.viewElem.scrollTop;
 			if (this.indentUpdateFrame !== null) cancelAnimationFrame(this.indentUpdateFrame);
 			this.indentUpdateFrame = requestAnimationFrame(() => {
@@ -2210,24 +2170,6 @@ class GitGraphView {
 	}
 
 	private observeTableEvents() {
-		this.tableElem.addEventListener('mouseover', (e: MouseEvent) => {
-			if (!document.body.classList.contains('sidebarView') || e.target === null) return;
-			const row = (<Element>e.target).closest('tr.commit') as HTMLElement | null;
-			if (row === null || (e.relatedTarget instanceof Node && row.contains(e.relatedTarget))) return;
-			this.closeCommitHover();
-			const id = parseInt(row.dataset.id!);
-			this.commitHoverTimeout = setTimeout(() => {
-				this.commitHoverTimeout = null;
-				this.graph.showCommitTooltip(id);
-			}, 350);
-		});
-		this.tableElem.addEventListener('mouseout', (e: MouseEvent) => {
-			if (!document.body.classList.contains('sidebarView') || e.target === null) return;
-			const row = (<Element>e.target).closest('tr.commit') as HTMLElement | null;
-			if (row === null || (e.relatedTarget instanceof Node && row.contains(e.relatedTarget))) return;
-			this.closeCommitHover();
-		});
-
 		// Register Click Event Handler
 		this.tableElem.addEventListener('click', (e: MouseEvent) => {
 			if (e.target === null) return;
@@ -2374,15 +2316,6 @@ class GitGraphView {
 		});
 	}
 
-	private closeCommitHover() {
-		if (this.commitHoverTimeout !== null) {
-			clearTimeout(this.commitHoverTimeout);
-			this.commitHoverTimeout = null;
-		}
-		this.graph.hideTooltip();
-	}
-
-
 	/* Commit Details View */
 
 	public loadCommitDetails(commitElem: HTMLElement) {
@@ -2448,6 +2381,20 @@ class GitGraphView {
 		this.saveState();
 
 		this.renderCommitDetailsView(refresh);
+	}
+
+	public showCommitDetailsAvatar(commitHash: string, avatar: string) {
+		const expandedCommit = this.expandedCommit;
+		if (expandedCommit === null || expandedCommit.commitHash !== commitHash || expandedCommit.loading || expandedCommit.commitDetails === null || expandedCommit.fileTree === null) return;
+		expandedCommit.avatar = avatar;
+		const top = document.querySelector('#cdvSummary .cdvSummaryTop'), row = top !== null ? top.querySelector('.cdvSummaryTopRow') : null;
+		if (top === null || row === null || row.querySelector('.cdvSummaryAvatar') !== null) return;
+		top.classList.add('withAvatar');
+		const avatarElem = document.createElement('span'), image = document.createElement('img');
+		avatarElem.className = 'cdvSummaryAvatar';
+		image.src = avatar;
+		avatarElem.appendChild(image);
+		row.appendChild(avatarElem);
 	}
 
 	public createFileTree(gitFiles: ReadonlyArray<GG.GitFileChange>, codeReview: GG.CodeReview | null) {
@@ -3267,6 +3214,9 @@ window.addEventListener('load', () => {
 					gitGraph.closeCommitDetails(true);
 					dialog.showError('Unable to load Commit Details', msg.error, null, null);
 				}
+				break;
+			case 'commitDetailsAvatar':
+				gitGraph.showCommitDetailsAvatar(msg.commitHash, msg.avatar);
 				break;
 			case 'compareCommits':
 				if (msg.error === null) {

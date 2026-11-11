@@ -1,7 +1,7 @@
 {
 	"name": "singular-git-graph",
 	"displayName": "Singular Git Graph",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"publisher": "singular-attention",
 	"author": {
 		"name": "Singular Attention"
@@ -69,6 +69,12 @@
 				"command": "singular-git-graph.sidebarBranches",
 				"title": "Filter Graph Branches",
 				"icon": "$(git-branch)"
+			},
+			{
+				"category": "Git Graph",
+				"command": "singular-git-graph.sidebarCurrentHistory",
+				"title": "Go to Current History Item",
+				"icon": "$(target)"
 			},
 			{
 				"category": "Git Graph",
@@ -1550,10 +1556,11 @@
 			"view/title": [
 				{ "command": "singular-git-graph.sidebarRepository", "group": "navigation@1", "when": "view == singularGitGraph.graph" },
 				{ "command": "singular-git-graph.sidebarBranches", "group": "navigation@2", "when": "view == singularGitGraph.graph" },
-				{ "command": "singular-git-graph.sidebarFetch", "group": "navigation@3", "when": "view == singularGitGraph.graph" },
-				{ "command": "singular-git-graph.sidebarRefresh", "group": "navigation@4", "when": "view == singularGitGraph.graph" },
-				{ "command": "singular-git-graph.sidebarFind", "group": "navigation@5", "when": "view == singularGitGraph.graph" },
-				{ "command": "singular-git-graph.sidebarSettings", "group": "navigation@6", "when": "view == singularGitGraph.graph" }
+				{ "command": "singular-git-graph.sidebarCurrentHistory", "group": "navigation@3", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarFetch", "group": "navigation@4", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarRefresh", "group": "navigation@5", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarFind", "group": "navigation@6", "when": "view == singularGitGraph.graph" },
+				{ "command": "singular-git-graph.sidebarSettings", "group": "navigation@7", "when": "view == singularGitGraph.graph" }
 			],
 			"commandPalette": [
 				{

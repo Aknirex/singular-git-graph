@@ -706,6 +706,12 @@ export interface ResponseCommitDetails extends ResponseWithErrorInfo {
 	readonly refresh: boolean;
 }
 
+export interface ResponseCommitDetailsAvatar extends BaseMessage {
+	readonly command: 'commitDetailsAvatar';
+	readonly commitHash: string;
+	readonly avatar: string;
+}
+
 export interface RequestCompareCommits extends RepoRequest {
 	readonly command: 'compareCommits';
 	readonly commitHash: string;
@@ -972,7 +978,7 @@ export interface ResponseLoadRepos extends BaseMessage {
 	readonly loadViewTo: LoadGitGraphViewTo;
 }
 
-export type SidebarToolbarAction = 'repository' | 'branches' | 'fetch' | 'refresh' | 'find' | 'settings';
+export type SidebarToolbarAction = 'repository' | 'branches' | 'fetch' | 'refresh' | 'find' | 'settings' | 'currentHistory';
 export interface ResponseSidebarToolbarAction extends BaseMessage {
 	readonly command: 'sidebarToolbarAction';
 	readonly action: SidebarToolbarAction;
@@ -1340,6 +1346,7 @@ export type ResponseMessage =
 	| ResponseCleanUntrackedFiles
 	| ResponseCompareCommits
 	| ResponseCommitDetails
+	| ResponseCommitDetailsAvatar
 	| ResponseCopyFilePath
 	| ResponseCopyToClipboard
 	| ResponseCreateArchive

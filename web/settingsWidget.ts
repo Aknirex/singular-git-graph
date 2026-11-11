@@ -156,6 +156,7 @@ class SettingsWidget {
 				'<tr class="lineAbove"><td class="left">Name:</td><td class="leftWithEllipsis" title="' + escapedRepoName + (this.repo.name === null ? ' (Default Name from the File System)' : '') + '">' + escapedRepoName + '</td><td class="btns right"><div id="editRepoName" title="Edit Name' + ELLIPSIS + '">' + SVG_ICONS.pencil + '</div>' + (this.repo.name !== null ? ' <div id="deleteRepoName" title="Delete Name' + ELLIPSIS + '">' + SVG_ICONS.close + '</div>' : '') + '</td></tr>' +
 				'<tr class="lineAbove lineBelow"><td class="left">Initial Branches:</td><td class="leftWithEllipsis" title="' + initialBranchesStr + ' (' + (initialBranchesLocallyConfigured ? 'Local' : 'Global') + ')">' + initialBranchesStr + '</td><td class="btns right"><div id="editInitialBranches" title="Edit Initial Branches' + ELLIPSIS + '">' + SVG_ICONS.pencil + '</div>' + (initialBranchesLocallyConfigured ? ' <div id="clearInitialBranches" title="Clear Initial Branches' + ELLIPSIS + '">' + SVG_ICONS.close + '</div>' : '') + '</td></tr>' +
 				'</table>' +
+				'<label id="settingsShowRemoteBranches"><input type="checkbox" id="settingsShowRemoteBranchesCheckbox" tabindex="-1"><span class="customCheckbox"></span>Show Remote Branches</label><br/>' +
 				'<label id="settingsShowStashes"><input type="checkbox" id="settingsShowStashesCheckbox" tabindex="-1"><span class="customCheckbox"></span>Show Stashes</label><br/>' +
 				'<label id="settingsShowTags"><input type="checkbox" id="settingsShowTagsCheckbox" tabindex="-1"><span class="customCheckbox"></span>Show Tags</label><br/>' +
 				'<label id="settingsIncludeCommitsMentionedByReflogs"><input type="checkbox" id="settingsIncludeCommitsMentionedByReflogsCheckbox" tabindex="-1"><span class="customCheckbox"></span>Include commits only mentioned by reflogs</label><span class="settingsWidgetInfo" title="Only applies when showing all branches.">' + SVG_ICONS.info + '</span><br/>' +
@@ -163,6 +164,17 @@ class SettingsWidget {
 				'</div>';
 
 			let userNameSet = false, userEmailSet = false;
+			if (!document.body.classList.contains('sidebarView')) {
+				html += '<div class="settingsSection general"><h3>Visible Columns</h3>' +
+					'<label><input type="checkbox" id="settingsColumnDateCheckbox" tabindex="-1"><span class="customCheckbox"></span>Date</label><br/>' +
+					'<label><input type="checkbox" id="settingsColumnAuthorCheckbox" tabindex="-1"><span class="customCheckbox"></span>Author</label><br/>' +
+					'<label><input type="checkbox" id="settingsColumnCommitCheckbox" tabindex="-1"><span class="customCheckbox"></span>Commit</label></div>';
+			}
+			html += '<div class="settingsSection general"><h3>Commit Ordering</h3>' +
+				'<label><input type="radio" name="settingsCommitOrdering" value="default"' + (this.repo.commitOrdering === GG.RepoCommitOrdering.Default ? ' checked' : '') + '><span class="customRadio"></span>Default</label><br/>' +
+				'<label><input type="radio" name="settingsCommitOrdering" value="date"' + (this.repo.commitOrdering === GG.RepoCommitOrdering.Date ? ' checked' : '') + '><span class="customRadio"></span>Commit Timestamp</label><br/>' +
+				'<label><input type="radio" name="settingsCommitOrdering" value="author-date"' + (this.repo.commitOrdering === GG.RepoCommitOrdering.AuthorDate ? ' checked' : '') + '><span class="customRadio"></span>Author Timestamp</label><br/>' +
+				'<label><input type="radio" name="settingsCommitOrdering" value="topo"' + (this.repo.commitOrdering === GG.RepoCommitOrdering.Topological ? ' checked' : '') + '><span class="customRadio"></span>Topological</label></div>';
 			if (this.config !== null) {
 				html += '<div class="settingsSection centered"><h3>User Details</h3>';
 				const userName = this.config.user.name, userEmail = this.config.user.email;
@@ -245,6 +257,31 @@ class SettingsWidget {
 				'</div></div>';
 
 			this.contentsElem.innerHTML = html;
+			const columnVisibility = this.view.getColumnVisibility();
+
+			const showRemoteBranchesElem = <HTMLInputElement>document.getElementById('settingsShowRemoteBranchesCheckbox');
+			showRemoteBranchesElem.checked = getShowRemoteBranches(this.repo.showRemoteBranchesV2);
+			showRemoteBranchesElem.addEventListener('change', () => {
+				if (this.currentRepo !== null) this.view.setShowRemoteBranches(showRemoteBranchesElem.checked);
+			});
+
+			const columnSettings: { id: string; column: 'date' | 'author' | 'commit'; visible: boolean }[] = [
+				{ id: 'settingsColumnDateCheckbox', column: 'date', visible: columnVisibility.date },
+				{ id: 'settingsColumnAuthorCheckbox', column: 'author', visible: columnVisibility.author },
+				{ id: 'settingsColumnCommitCheckbox', column: 'commit', visible: columnVisibility.commit }
+			];
+			columnSettings.forEach((setting) => {
+				const elem = <HTMLInputElement | null>document.getElementById(setting.id);
+				if (elem === null) return;
+				elem.checked = setting.visible;
+				elem.addEventListener('change', () => this.view.setColumnVisibility(setting.column, elem.checked));
+			});
+
+			document.querySelectorAll<HTMLInputElement>('input[name="settingsCommitOrdering"]').forEach((elem) => {
+				elem.addEventListener('change', () => {
+					if (elem.checked && this.currentRepo !== null) this.view.setCommitOrdering(elem.value as GG.RepoCommitOrdering);
+				});
+			});
 
 			document.getElementById('editRepoName')!.addEventListener('click', () => {
 				if (this.currentRepo === null || this.repo === null) return;

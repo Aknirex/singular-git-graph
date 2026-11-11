@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.0.7 - 2026-11-11
+
+* Removed commit hover cards and styled expanded commit details to match native hover surfaces.
+* Fixed sidebar expansion columns and let commit messages use empty ref space.
+* Added a current history item toolbar action, moved display options into Settings, and made Settings fill the view.
+* Rendered commit details before avatars finish loading and set the graph to crisp edges.
+
 ## 1.0.6 - 2026-11-11
 
 * Replaced branch and tag artwork with VS Code Codicons.

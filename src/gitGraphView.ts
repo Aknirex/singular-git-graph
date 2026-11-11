@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AvatarManager } from './avatarManager';
 import { getConfig } from './config';
-import { DataSource, GitCommitDetailsData, GitConfigKey } from './dataSource';
+import { DataSource, GitConfigKey } from './dataSource';
 import { ExtensionState } from './extensionState';
 import { Logger } from './logger';
 import { RepoFileWatcher } from './repoFileWatcher';
@@ -263,21 +263,23 @@ export class GitGraphView extends Disposable {
 				});
 				break;
 			case 'commitDetails':
-				let data = await Promise.all<GitCommitDetailsData, string | null>([
-					msg.commitHash === UNCOMMITTED
-						? this.dataSource.getUncommittedDetails(msg.repo)
-						: msg.stash === null
-							? this.dataSource.getCommitDetails(msg.repo, msg.commitHash, msg.hasParents)
-							: this.dataSource.getStashDetails(msg.repo, msg.commitHash, msg.stash),
-					msg.avatarEmail !== null ? this.avatarManager.getAvatarImage(msg.avatarEmail) : Promise.resolve(null)
-				]);
+				const details = await (msg.commitHash === UNCOMMITTED
+					? this.dataSource.getUncommittedDetails(msg.repo)
+					: msg.stash === null
+						? this.dataSource.getCommitDetails(msg.repo, msg.commitHash, msg.hasParents)
+						: this.dataSource.getStashDetails(msg.repo, msg.commitHash, msg.stash));
 				this.sendMessage({
 					command: 'commitDetails',
-					...data[0],
-					avatar: data[1],
+					...details,
+					avatar: null,
 					codeReview: msg.commitHash !== UNCOMMITTED ? this.extensionState.getCodeReview(msg.repo, msg.commitHash) : null,
 					refresh: msg.refresh
 				});
+				if (msg.avatarEmail !== null) {
+					this.avatarManager.getAvatarImage(msg.avatarEmail).then((avatar) => {
+						if (avatar !== null) this.sendMessage({ command: 'commitDetailsAvatar', commitHash: msg.commitHash, avatar: avatar });
+					}, () => { });
+				}
 				break;
 			case 'compareCommits':
 				this.sendMessage({
@@ -750,7 +752,6 @@ export class GitGraphView extends Disposable {
 				<div id="controls">
 					<span id="repoControl"><span class="unselectable">Repo: </span><div id="repoDropdown" class="dropdown"></div></span>
 					<span id="branchControl"><span class="unselectable">Branches: </span><div id="branchDropdown" class="dropdown"></div></span>
-					<label id="showRemoteBranchesControl"><input type="checkbox" id="showRemoteBranchesCheckbox" tabindex="-1"><span class="customCheckbox"></span>Show Remote Branches</label>
 					<div id="findBtn" title="Find"></div>
 					<div id="terminalBtn" title="Open a Terminal for this Repository"></div>
 					<div id="settingsBtn" title="Repository Settings"></div>

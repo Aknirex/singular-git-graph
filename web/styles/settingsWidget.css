@@ -1,14 +1,17 @@
 #settingsWidget{
 	display:block;
 	position:fixed;
-	top:-158px;
-	right:28px;
-	width:400px;
-	min-height:146px;
-	padding:0 10px 4px 10px;
+	top:0;
+	right:0;
+	bottom:0;
+	left:0;
+	width:auto;
+	min-height:0;
+	padding:40px 24px 24px;
+	box-sizing:border-box;
 	z-index:31;
-	background-color:var(--vscode-editorWidget-background);
-	box-shadow:0 2px 8px var(--vscode-widget-shadow);
+	background-color:var(--vscode-editor-background);
+	border:1px solid var(--vscode-widget-border, rgba(128,128,128,0.35));
 	line-height:17px;
 	font-size:13px;
 	color:var(--vscode-editorSuggestWidget-foreground);
@@ -18,17 +21,26 @@
 	user-select:none;
 	overflow-x:hidden;
 	overflow-y:auto;
-	max-height:90vh;
+	max-height:none;
+	opacity:0;
+	visibility:hidden;
+	transform:translateY(6px);
 }
 #settingsWidget.active{
-	top:0;
+	opacity:1;
+	visibility:visible;
+	transform:translateY(0);
 }
 #settingsWidget.transition{
-	transition:top .2s linear;
+	transition:opacity .15s ease, transform .15s ease, visibility .15s linear;
 }
+#settingsContent{max-width:1100px;margin:0 auto;}
 
 #settingsWidget h2{
-	margin:8px 10px;
+	position:absolute;
+	top:8px;
+	left:24px;
+	margin:0;
 	padding:0;
 	font-size:16px;
 	line-height:24px;
