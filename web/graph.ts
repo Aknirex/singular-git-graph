@@ -307,9 +307,9 @@ class Vertex {
 		circle.setAttribute('cx', cx);
 		circle.setAttribute('cy', cy);
 		circle.setAttribute('r', '4');
+		circle.setAttribute('stroke', colour);
 		if (this.isCurrent) {
 			circle.setAttribute('class', 'current');
-			circle.setAttribute('stroke', colour);
 		} else {
 			circle.setAttribute('fill', colour);
 		}
@@ -816,6 +816,7 @@ class Graph {
 
 	private vertexOut(event: MouseEvent) {
 		if (event.target === null) return;
+		if (event.relatedTarget instanceof Element && event.relatedTarget.closest('#graphTooltip') !== null) return;
 		this.closeTooltip();
 	}
 
@@ -906,12 +907,34 @@ class Graph {
 		anchor.appendChild(shadow);
 		anchor.appendChild(pointer);
 		anchor.appendChild(content);
-		anchor.style.left = pixel.x + 'px';
-		anchor.style.top = pixel.y + 'px';
-		this.contentElem.appendChild(anchor);
+		const sidebarView = document.body.classList.contains('sidebarView');
+		if (sidebarView) {
+			anchor.style.position = 'fixed';
+			anchor.style.left = '4px';
+			anchor.style.right = '4px';
+			anchor.style.top = Math.max(4, Math.min(vertexScreenY, window.innerHeight - 4)) + 'px';
+			content.style.left = '0';
+			content.style.maxWidth = 'none';
+			content.addEventListener('wheel', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+			}, { passive: false });
+			document.body.appendChild(anchor);
+		} else {
+			anchor.style.left = pixel.x + 'px';
+			anchor.style.top = pixel.y + 'px';
+			this.contentElem.appendChild(anchor);
+		}
 		this.tooltipElem = anchor;
 
 		let tooltipRect = content.getBoundingClientRect();
+		if (sidebarView) {
+			anchor.style.top = Math.max(4, Math.min(vertexScreenY - tooltipRect.height / 2, window.innerHeight - tooltipRect.height - 4)) + 'px';
+			shadow.style.width = tooltipRect.width + 'px';
+			shadow.style.height = tooltipRect.height + 'px';
+			anchor.style.opacity = '1';
+			return;
+		}
 		let relativeOffset = -tooltipRect.height / 2; // Center the tooltip vertically on the vertex
 		if (vertexScreenY + relativeOffset + tooltipRect.height > this.viewElem.clientHeight - 4) {
 			// Not enough height below the vertex to fit the vertex, shift it up.

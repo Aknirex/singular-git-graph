@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.0.5 - 2026-11-11
+
+* Fixed repository and branch dropdown placement in the sidebar toolbar.
+* Matched graph commit nodes more closely to the native SCM graph and improved sidebar hover details.
+* Prevented hover-card wheel input from scrolling the graph and removed its internal scrollbar.
+
 ## 1.0.4 - 2026-11-11
 
 * Added a distinct Singular Git Graph icon for Marketplace publication.
