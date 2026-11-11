@@ -1,0 +1,44 @@
+name: Publish to Visual Studio Marketplace
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npm run compile
+
+      - name: Test
+        run: npm test -- --runInBand
+
+      - name: Verify release tag matches extension version
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "Release tag $GITHUB_REF_NAME does not match package version v$version" >&2
+            exit 1
+          fi
+
+      - name: Publish
+        run: npx --yes @vscode/vsce publish --oidc --no-rewrite-relative-links

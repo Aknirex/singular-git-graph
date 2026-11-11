@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.8 - 2026-11-11
+
+* Added a GitHub Actions release workflow that tests and publishes through Marketplace Trusted Publishing.
+
 ## 1.0.7 - 2026-11-11
 
 * Removed commit hover cards and styled expanded commit details to match native hover surfaces.
